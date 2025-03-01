@@ -1,0 +1,143 @@
+@charset "utf-8";
+/* CSS Document */
+body{ font-family:Arial; }
+td,th{ font-family:Arial; font-size:13PX;}
+th{ font-size:16PX;}
+.table {margin: 0px auto;}
+.table th{ background:#333333; color:#CCC; font-size:16px;}
+
+a:link {
+	font-family: "Arial", "Helvetica", "sans-serif";
+	font-size: 16px;
+	color: #0000FF;
+}
+a:visited {
+	font-family: "Arial", "Helvetica", "sans-serif";
+	font-size: 16px;
+	color: #0000FF;
+}
+a:hover {
+	font-family: "Arial", "Helvetica", "sans-serif";
+	font-size: 16px;
+	color: #990000;
+}
+a:active {
+	text-decoration: none;
+	color: hsla(0, 0%, 100%, 1);
+}
+
+
+.cvjoint_a{background:url(cvjoint_a.jpg) no-repeat center;}
+.cvjoint_a:hover{background:url(cvjoint_b.jpg) no-repeat center;}
+.cvjoint_c{background:url(cvjoint_c.jpg) no-repeat center;}
+.cvjoint_c:hover{background:url(cvjoint_d.jpg) no-repeat center;}
+.cvjoint_e{background:url(cvjoint_e.jpg) no-repeat center;}
+.cvjoint_e:hover{background:url(cvjoint_f.jpg) no-repeat center;}
+
+.driveshaft_a{background:url(driveshaft_a.jpg) no-repeat center;}
+.driveshaft_a:hover{background:url(driveshaft_b.jpg) no-repeat center;}
+.driveshaft_c{background:url(driveshaft_c.jpg) no-repeat center;}
+.driveshaft_c:hover{background:url(driveshaft_d.jpg) no-repeat center;}
+.driveshaft_e{background:url(driveshaft_e.jpg) no-repeat center;}
+.driveshaft_e:hover{background:url(driveshaft_f.jpg) no-repeat center;}
+
+.universaljoint_a{background:url(universaljoint_a.jpg) no-repeat center;}
+.universaljoint_a:hover{background:url(universaljoint_b.jpg) no-repeat center;}
+.universaljoint_c{background:url(universaljoint_c.jpg) no-repeat center;}
+.universaljoint_c:hover{background: url(universaljoint_d.jpg) no-repeat center;}
+.universaljoint_e{background:url(universaljoint_e.jpg) no-repeat center;}
+.universaljoint_e:hover{background: url(universaljoint_f.jpg) no-repeat center;}
+
+.hubs_a{background:url(hubs_a.jpg) no-repeat center;}
+.hubs_a:hover{background:url(hubs_b.jpg) no-repeat center;}
+.hubs_c{background:url(hubs_c.jpg) no-repeat center;}
+.hubs_c:hover{background:url(hubs_d.jpg) no-repeat center;}
+.hubs_e{background:url(hubs_e.jpg) no-repeat center;}
+.hubs_e:hover{background:url(hubs_f.jpg) no-repeat center;}
+
+.accessories_a{background:url(accessories_a.jpg) no-repeat center;}
+.accessories_a:hover{background:url(accessories_b.jpg) no-repeat center;}
+.accessories_c{background:url(accessories_c.jpg) no-repeat center;}
+.accessories_c:hover{background:url(accessories_d.jpg) no-repeat center;}
+.accessories_e{background:url(accessories_e.jpg) no-repeat center;}
+.accessories_e:hover{background:url(accessories_f.jpg) no-repeat center;}
+
+.inboardjoint_a{background:url(inboardjoint_a.jpg) no-repeat center;}
+.inboardjoint_a:hover{background:url(inboardjoint_b.jpg) no-repeat center;}
+.inboardjoint_c{background:url(inboardjoint_c.jpg) no-repeat center;}
+.inboardjoint_c:hover{background:url(inboardjoint_d.jpg) no-repeat center;}
+.inboardjoint_e{background:url(inboardjoint_e.jpg) no-repeat center;}
+.inboardjoint_e:hover{background:url(inboardjoint_f.jpg) no-repeat center;}
+
+.wdlockinghubd_a{background:url(4wdlockinghubd_a.jpg) no-repeat center;}
+.wdlockinghubd_a:hover{background:url(4wdlockinghubd_b.jpg) no-repeat center;}
+.wdlockinghubd_c{background:url(4wdlockinghubd_c.jpg) no-repeat center;}
+.wdlockinghubd_c:hover{background:url(4wdlockinghubd_d.jpg) no-repeat center;}
+.wdlockinghubd_e{background:url(4wdlockinghubd_e.jpg) no-repeat center;}
+.wdlockinghubd_e:hover{background:url(4wdlockinghubd_f.jpg) no-repeat center;}
+
+.steeringrack_a{background:url(steeringrack_a.jpg) no-repeat center;}
+.steeringrack_a:hover{background:url(steeringrack_b.jpg) no-repeat center;}
+.steeringrack_c{background:url(steeringrack_c.jpg) no-repeat center;}
+.steeringrack_c:hover{background:url(steeringrack_d.jpg) no-repeat center;}
+.steeringrack_e{background:url(steeringrack_e.jpg) no-repeat center;}
+.steeringrack_e:hover{background:url(steeringrack_f.jpg) no-repeat center;}
+
+.steeringpump_a{background:url(steeringpump_a.jpg) no-repeat center;}
+.steeringpump_a:hover{background:url(steeringpump_b.jpg) no-repeat center;}
+.steeringpump_c{background:url(steeringpump_c.jpg) no-repeat center;}
+.steeringpump_c:hover{background:url(steeringpump_d.jpg) no-repeat center;}
+.steeringpump_e{background:url(steeringpump_e.jpg) no-repeat center;}
+.steeringpump_e:hover{background:url(steeringpump_f.jpg) no-repeat center;}
+
+.waterpump_a{background:url(waterpump_a.jpg) no-repeat center;}
+.waterpump_a:hover{background:url(waterpump_b.jpg) no-repeat center;}
+.waterpump_c{background:url(waterpump_c.jpg) no-repeat center;}
+.waterpump_c:hover{background:url(waterpump_d.jpg) no-repeat center;}
+.waterpump_e{background:url(waterpump_e.jpg) no-repeat center;}
+.waterpump_e:hover{background:url(waterpump_f.jpg) no-repeat center;}
+
+.brakedisc_a{background:url(brakedisc_a.jpg) no-repeat center;}
+.brakedisc_a:hover{background:url(brakedisc_b.jpg) no-repeat center;}
+.brakedisc_c{background:url(brakedisc_c.jpg) no-repeat center;}
+.brakedisc_c:hover{background:url(brakedisc_d.jpg) no-repeat center;}
+.brakedisc_e{background:url(brakedisc_e.jpg) no-repeat center;}
+.brakedisc_e:hover{background:url(brakedisc_f.jpg) no-repeat center;}
+
+.newproduct_a{background:url(newproduct_a.jpg) no-repeat center;}
+.newproduct_a:hover{background:url(newproduct_b.jpg) no-repeat center;}
+.newproduct_c{background:url(newproduct_c.html) no-repeat center;}
+.newproduct_c:hover{background:url(newproduct_d.html) no-repeat center;}
+.newproduct_e{background:url(newproduct_e.jpg) no-repeat center;}
+.newproduct_e:hover{background:url(newproduct_f.jpg) no-repeat center;}
+
+.service_a{background:url(service_a.jpg) no-repeat center;}
+.service_a:hover{background:url(service_b.jpg) no-repeat center;}
+.service_c{background:url(service_c.html) no-repeat center;}
+.service_c:hover{background:url(service_d.html) no-repeat center;}
+.service_e{background:url(service_e.jpg) no-repeat center;}
+.service_e:hover{background:url(service_f.jpg) no-repeat center;}
+
+.home_a{background:url(home_a.jpg) no-repeat center;}
+.home_a:hover{background:url(home_b.jpg) no-repeat center;}
+.home_c{background:url(home_c.html) no-repeat center;}
+.home_c:hover{background:url(home_d.html) no-repeat center;}
+.home_e{background:url(home_e.jpg) no-repeat center;}
+.home_e:hover{background:url(home_f.jpg) no-repeat center;}
+
+.chinese_a{background:url(chinese_a.jpg) no-repeat center;}
+.chinese_a:hover{background:url(chinese_b.jpg) no-repeat center;}
+.chinese_c{background:url(chinese_c.html) no-repeat center;}
+.chinese_c:hover{background:url(chinese_d.html) no-repeat center;}
+.chinese_e{background:url(chinese_e.jpg) no-repeat center;}
+.chinese_e:hover{background:url(chinese_f.jpg) no-repeat center;}
+
+
+
+
+
+
+
+
+
+
