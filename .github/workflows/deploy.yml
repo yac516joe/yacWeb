@@ -22,7 +22,9 @@ jobs:
           echo "EC2_USER: $EC2_USER"
           echo "EC2_HOST: $EC2_HOST"
           echo "SSH_PRIVATE_KEY length: ${#SSH_PRIVATE_KEY}"
-          echo "$SSH_PRIVATE_KEY" > private_key
+          # 使用 printf 避免換行問題
+          printf "%s" "$SSH_PRIVATE_KEY" > private_key
           chmod 600 private_key
+          # 測試私鑰是否有效
           ssh -v -i private_key -o StrictHostKeyChecking=no "$EC2_USER@$EC2_HOST" "echo 'SSH connection successful'"
           rm -f private_key
