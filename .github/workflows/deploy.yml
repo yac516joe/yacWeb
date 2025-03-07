@@ -1,0 +1,30 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main  # 當推送到 main 分支時觸發
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to EC2
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          TARGET_DIR: ${{ secrets.TARGET_DIR }}
+        run: |
+          # 將私鑰寫入文件
+          echo "$SSH_PRIVATE_KEY" > private_key
+          chmod 600 private_key
+
+          # 使用 rsync 或 scp 部署程式碼
+          rsync -avz --delete -e "ssh -i private_key -o StrictHostKeyChecking=no" ./ $EC2_USER@$EC2_HOST:$TARGET_DIR
+
+          # 清理
+          rm -f private_key
