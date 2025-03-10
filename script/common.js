@@ -9,6 +9,16 @@ async function loadHeader() {
     }
 }
 
+async function loadFooterer() {
+    try {
+        const response = await fetch('/common/footer.html');
+        const html = await response.text();
+        document.getElementById('footer-placeholder').innerHTML = html;
+    } catch (error) {
+        console.error('Error loading footer:', error);
+    }
+}
+
 async function loadNavigationBanner() {
     try {
         const response = await fetch('/common/navigation-banner.html');
@@ -23,7 +33,6 @@ async function loadNavigationBanner() {
 document.addEventListener('DOMContentLoaded', () => {
     loadHeader();
     loadNavigationBanner();
+    loadFooterer();
 });
 
-// 當頁面載入時執行
-document.addEventListener('DOMContentLoaded', loadHeader); 
