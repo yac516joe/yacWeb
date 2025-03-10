@@ -1,0 +1,15 @@
+.company-footer {
+    text-align: center;
+    padding: 25px 0;
+    border-top: 1px solid #e0e0e0;
+}
+
+.company-footer img {
+    margin-bottom: 15px;
+    border-radius: 4px;
+}
+
+.company-footer p {
+    color: #777;
+    font-size: 14px;
+}
