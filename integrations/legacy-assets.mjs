@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-// 舊版靜態站的資料夾。其中 .html 已匯入資料庫（由 legacy_redirects 轉址），
-// 其餘圖片 / CAD / PDF 等檔案維持原路徑，確保 Google 收錄的舊圖片網址不失效。
+// 舊版靜態站已封存於 legacy/。其中 .html 已匯入資料庫（由 legacy_redirects 轉址），
+// 其餘圖片 / CAD / PDF 等檔案在建置時複製回原網址路徑，確保 Google 收錄的舊圖片網址不失效。
 const LEGACY_DIRS = [
   '2005', '2007', '2009', '2013', 'accessories', 'brakedisc', 'cv-joint', 'cvj', 'ds', 'flash', 'go',
   'hubs', 'img', 'Inboard_Joints', 'index', 'lockinghub', 'new-p', 'pics', 'steeringpump',
@@ -24,7 +24,7 @@ function* walk(dir) {
 }
 
 export default function legacyAssets() {
-  const root = process.cwd();
+  const root = path.join(process.cwd(), 'legacy');
   return {
     name: 'yac-legacy-assets',
     hooks: {

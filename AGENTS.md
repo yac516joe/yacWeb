@@ -18,7 +18,7 @@
   - `migrations/`：Cloudflare D1 SQL 結構遷移檔（依序命名如 `0001_initial_schema.sql`）
   - `scripts/`：舊版靜態 HTML 自動解析與匯入 D1 之腳本、密碼雜湊工具
   - `src/`、`public/`、`integrations/`、`tests/`：動態網站原始碼（Astro）、靜態資源、舊站資產整合、單元測試
-  - 根目錄既有的舊靜態資料夾（`cvj/`、`ds/`、`hubs/`、`img/`、`pics/` 等 `.html` 與圖片）：**在新版正式切換上線前必須保持原狀不動**；新站建置時只會複製其中的非 HTML 資產，舊 `.html` 由 301 轉址取代
+  - `legacy/`：舊靜態網站封存（所有 `.html` 與圖片 / CAD / PDF，已用 `git mv` 保留歷史）。`scripts/migrate-legacy-html.ts` 只讀此資料夾來重新解析匯入；建置時 `integrations/legacy-assets.mjs` 僅把其中的非 HTML 資產複製回原網址路徑，舊 `.html` 由 301 轉址取代
 
 ---
 
@@ -33,7 +33,7 @@
 3. **資料庫變更規範**：
    - 所有 D1 資料表結構變更一律透過 `migrations/` 資料夾下的 SQL 遷移檔管理，嚴禁手動修改線上 D1 資料庫。
 4. **舊站零中斷原則**：
-   - 新版正式上線前，不得刪除或破壞既有靜態 HTML 與圖片檔案。
+   - 舊 `.html` 與圖片已封存於 `legacy/`，不得刪除；所有既有圖片網址須持續可用（由建置複製），既有 `.html` 網址須 301。正式站目前仍由 `main` 的舊靜態檔提供，切換前勿動 `main`。
    - 所有既有 `.html` 網址必須保留或設定 301 轉址（詳見 `docs/PLAN.md` 第七節），確保 Google SEO 收錄不失效。
 
 ---

@@ -1,7 +1,7 @@
 # YAC 華佑科技（www.yac.com.tw）網站動態化與後台管理系統規劃書 (`docs/PLAN.md`)
 
 > **版本**：v1.1（Phase 1 規劃；v1.1 補上 Phase 2–4 實作後與初稿的差異）
-> **實作差異摘要（以 `AGENTS.md` 為準）**：① 以原生 D1 prepared statements + 薄型別層取代 Drizzle，樣式為手寫 CSS 設計系統（非 Tailwind）；② 核心抽象為 `catalog_pages`（一列＝舊站一張規格表，`columns_json` 定義欄位），規格存 `products.specs_json`；③ Session 為無狀態 HMAC 簽章 Cookie（8 小時）＋ D1 登入限流，另支援 Cloudflare Access JWT；④ 詢價為 localStorage 詢價單 + `mailto:`；⑤ 舊靜態檔仍留在根目錄（非 `site/`），建置時僅複製非 HTML 資產，舊 `.html` 由 D1 `legacy_redirects` 301；⑥ 後台 CSV 每筆車款一列、依 YAC 料號 upsert、單次上限 200 產品；⑦ `news_posts.content_html` 以 HTML 輸出（僅管理員可編輯）。
+> **實作差異摘要（以 `AGENTS.md` 為準）**：① 以原生 D1 prepared statements + 薄型別層取代 Drizzle，樣式為手寫 CSS 設計系統（非 Tailwind）；② 核心抽象為 `catalog_pages`（一列＝舊站一張規格表，`columns_json` 定義欄位），規格存 `products.specs_json`；③ Session 為無狀態 HMAC 簽章 Cookie（8 小時）＋ D1 登入限流，另支援 Cloudflare Access JWT；④ 詢價為 localStorage 詢價單 + `mailto:`；⑤ 舊靜態檔已封存到 `legacy/`（非 `site/`），建置時僅複製非 HTML 資產，舊 `.html` 由 D1 `legacy_redirects` 301；⑥ 後台 CSV 每筆車款一列、依 YAC 料號 upsert、單次上限 200 產品；⑦ `news_posts.content_html` 以 HTML 輸出（僅管理員可編輯）。
 > **目標**：將現有純靜態 HTML 網站全面升級為 **Cloudflare Pages / Workers + D1 資料庫 + R2 圖床** 之動態網站，提供全站繁體中文（含國際汽配專業術語對照）的前台型錄查詢系統，以及支援新增、修改、刪除與批次匯入的後台管理系統（CMS）。
 
 ---

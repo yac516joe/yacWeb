@@ -12,7 +12,8 @@ import { brandOf, insertBatches, legacyKey, pageSlugOf, sqlVal } from './lib/leg
 import { NEWS_SEED, SITE_PAGES } from './lib/seed-content';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', '.astro', '.wrangler', 'src', 'scripts', 'docs', 'migrations', 'tests', 'integrations']);
+// 舊版靜態站（HTML 與圖片）已封存於 legacy/，匯入時只讀取此資料夾
+const LEGACY = path.join(ROOT, 'legacy');
 
 interface CatConf {
   slug: string;
@@ -41,14 +42,13 @@ const CATS: CatConf[] = [
 
 // ---------- 檔案工具 ----------
 function readHtml(rel: string): string {
-  const buf = fs.readFileSync(path.join(ROOT, rel));
+  const buf = fs.readFileSync(path.join(LEGACY, rel));
   const s = buf.toString('utf8');
   return s.includes('\uFFFD') ? new TextDecoder('big5').decode(buf) : s;
 }
 
 function* walk(dir: string): Generator<string> {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (SKIP_DIRS.has(e.name) && dir === ROOT) continue;
     const p = path.join(dir, e.name);
     if (e.isDirectory()) yield* walk(p);
     else if (/\.html?$/i.test(e.name)) yield p;
@@ -68,7 +68,7 @@ function listDir(abs: string): string[] {
 /** 回傳實際大小寫的站內絕對路徑（Cloudflare 靜態資源區分大小寫） */
 function resolveExact(url: string): { path: string; caseFixed: boolean } | null {
   const segs = url.split('/').filter(Boolean);
-  let cur = ROOT;
+  let cur = LEGACY;
   const out: string[] = [];
   let fixed = false;
   for (const seg of segs) {
@@ -97,7 +97,7 @@ function safeDecode(s: string): string {
 function readIndex(rel: string): { text: Map<string, string>; order: Map<string, number> } {
   const text = new Map<string, string>();
   const order = new Map<string, number>();
-  if (!fs.existsSync(path.join(ROOT, rel))) return { text, order };
+  if (!fs.existsSync(path.join(LEGACY, rel))) return { text, order };
   const $ = cheerio.load(readHtml(rel));
   let n = 0;
   $('a[href]').each((_, a) => {
@@ -125,7 +125,7 @@ interface PageRec {
   table: ParsedTable;
 }
 
-const allHtml = [...walk(ROOT)].map((p) => path.relative(ROOT, p).replace(/\\/g, '/'));
+const allHtml = [...walk(LEGACY)].map((p) => path.relative(LEGACY, p).replace(/\\/g, '/'));
 const redirects = new Map<string, { to: string; broken: number; note: string }>();
 const warnings: string[] = [];
 const missingImages = new Map<string, Set<string>>();
@@ -156,7 +156,7 @@ CATS.forEach((cat) => {
   const slugsUsed = new Set<string>();
   const files: string[] = [];
   cat.dirs.forEach((d) => {
-    const abs = path.join(ROOT, d);
+    const abs = path.join(LEGACY, d);
     if (!fs.existsSync(abs)) return;
     for (const f of fs.readdirSync(abs).sort()) {
       if (!/\.html?$/i.test(f)) continue;
