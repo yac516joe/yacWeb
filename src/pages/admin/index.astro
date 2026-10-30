@@ -43,7 +43,7 @@ const quick = [
   <div class="stats">
     {stats.map((s) => <div class="stat"><small>{s.label}</small><b>{s.v.toLocaleString()}</b></div>)}
   </div>
-  {!r2 && <div class="flash warn">尚未綁定 R2 Bucket（MEDIA_BUCKET）：圖片上傳功能暫停，仍可填寫既有圖片路徑。</div>}
+  {!r2 && <div class="flash warn">尚未綁定 R2 Bucket：圖片暫存於 D1（單檔上限 1 MB）；啟用 R2 後自動改存 R2。</div>}
   <div class="card">
     <div class="card-h"><h2>快速操作</h2></div>
     <div class="card-b" style="display:flex;gap:10px;flex-wrap:wrap">

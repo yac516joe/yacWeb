@@ -7,7 +7,8 @@
 npx wrangler d1 create yac-website-db        # 已建立；database_id 已寫入 wrangler.toml（非機密，可提交）
 npx wrangler r2 bucket create yac-website-media
 ```
-- **R2 需先在 Cloudflare Dashboard → R2 啟用**（帳號目前尚未啟用，API 會回 10042）。啟用並建立 bucket 後，取消 `wrangler.toml` 內 `[[r2_buckets]]` 的註解再部署；在此之前圖片上傳 / `/media/*` 不可用（回 501），其餘功能正常。
+- **R2**：已啟用並建立 bucket `yac-website-media`，由 `wrangler.toml` 的 `[[r2_buckets]]` 綁定。若未綁定 R2，圖片會改存 D1 `media_blobs`（migration `0002`，單檔 ≤ 1 MB）。
+- **D1 免費版每日寫入上限**：匯入 seed（約 2.8 萬列＋索引）會用掉當日額度，額度用盡時所有寫入（上傳、後台編輯）會失敗，UTC 午夜重置；登入的稽核 / 頻率紀錄為 best-effort，不會讓登入失敗。正式上線時應避免當日重複全量匯入。
 - 使用 `wrangler.toml` 時，Pages 不讀取 Dashboard 的明文變數；`ADMIN_AUTH_MODE`、`ADMIN_USERNAME` 寫在 `wrangler.toml` 的 `[vars]`，機密（`ADMIN_PASSWORD_HASH`、`SESSION_SECRET`）才用 Secret 設定。
 
 ## 2. 套用 migration 並匯入資料

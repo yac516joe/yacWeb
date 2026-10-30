@@ -33,14 +33,22 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
   const password = String(form.get('password') ?? '');
   const userOk = timingSafeEqual(enc.encode(username), enc.encode(env.ADMIN_USERNAME));
   const passOk = await verifyPassword(password, env.ADMIN_PASSWORD_HASH);
+  // 紀錄類寫入為 best-effort：D1 寫入額度用盡等情況不應讓登入本身失敗
+  const bestEffort = async (fn: () => Promise<unknown>) => {
+    try {
+      await fn();
+    } catch (e) {
+      console.error('login bookkeeping failed', e);
+    }
+  };
   if (!userOk || !passOk) {
-    await recordLoginFailure(db, ip);
-    await audit(db, username.slice(0, 50) || '(空白)', 'LOGIN_FAIL', 'admin', null, null, ip);
+    await bestEffort(() => recordLoginFailure(db, ip));
+    await bestEffort(() => audit(db, username.slice(0, 50) || '(空白)', 'LOGIN_FAIL', 'admin', null, null, ip));
     return back(url, 'bad', next);
   }
 
-  await clearLoginFailures(db, ip);
-  await audit(db, username, 'LOGIN', 'admin', null, null, ip);
+  await bestEffort(() => clearLoginFailures(db, ip));
+  await bestEffort(() => audit(db, username, 'LOGIN', 'admin', null, null, ip));
   const token = await createSessionToken(username, env.SESSION_SECRET);
   return new Response(null, {
     status: 303,

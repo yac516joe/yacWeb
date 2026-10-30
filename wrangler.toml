@@ -16,7 +16,7 @@ database_name = "yac-website-db"
 database_id = "c5ad53fd-800f-4db8-a584-396f6573e0d5"
 migrations_dir = "migrations"
 
-# R2 需先在 Cloudflare Dashboard 啟用並建立 bucket（見 docs/DEPLOY.md）；bucket 不存在時 Pages 部署會失敗。
-#[[r2_buckets]]
-#binding = "MEDIA_BUCKET"
-#bucket_name = "yac-website-media"
+# R2 bucket 已建立；未綁定時圖片改存 D1（media_blobs，單檔 1 MB）。
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "yac-website-media"
