@@ -1,0 +1,32 @@
+---
+interface Props { active?: string }
+const { active = '' } = Astro.props;
+const links = [
+  ['home', '/', '首頁'],
+  ['catalog', '/catalog', '產品型錄'],
+  ['news', '/news', '最新產品'],
+  ['about', '/about', '關於 YAC'],
+  ['contact', '/contact', '聯絡詢價'],
+];
+---
+<div class="util">
+  <div class="wrap">
+    <span><b>台灣精品獎</b> 推薦品牌 · ISO 9000</span>
+    <span>TEL 886-4-865-0926 · yac106@yac.com.tw</span>
+  </div>
+</div>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="/" aria-label="YAC 華佑科技 首頁">
+      <span class="mark">YAC</span>
+      <span class="brand-t"><b>華佑科技</b><span>C.V. JOINT CO., LTD</span></span>
+    </a>
+    <nav class="main-nav" aria-label="主選單">
+      {links.map(([key, href, label]) => <a href={href} class={active === key ? 'on' : ''}>{label}</a>)}
+    </nav>
+    <div class="hd-r">
+      <a class="btn sm" href="/inquiry">詢價單 <span class="badge" data-inq-count></span></a>
+      <button class="nav-toggle" type="button" aria-label="開啟選單">MENU</button>
+    </div>
+  </div>
+</header>

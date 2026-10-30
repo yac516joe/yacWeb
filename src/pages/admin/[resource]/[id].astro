@@ -1,0 +1,62 @@
+---
+import Admin from '../../../layouts/Admin.astro';
+import ResourceForm from '../../../islands/admin/ResourceForm';
+import { HAND_OPTIONS, RESOURCES, type Opt } from '../../../lib/admin-resources';
+import { all, getDb } from '../../../lib/db';
+import { getRow } from '../../../lib/admin-crud';
+
+export const prerender = false;
+
+const def = RESOURCES[Astro.params.resource ?? ''];
+if (!def) return new Response('Not found', { status: 404 });
+
+const idParam = Astro.params.id ?? '';
+const isNew = idParam === 'new';
+if (isNew && !def.canCreate) return Astro.redirect(`/admin/${def.key}`);
+const db = getDb(Astro.locals);
+
+let initial: Record<string, any> = {};
+if (!isNew) {
+  const row = await getRow(db, def, idParam);
+  if (!row) return new Response('Not found', { status: 404 });
+  initial = row;
+}
+
+const options: Record<string, Opt[]> = { hand: HAND_OPTIONS };
+if (def.fields.some((f) => f.options === 'categories')) {
+  options.categories = (await all<{ id: number; name_zh: string }>(db, 'SELECT id, name_zh FROM categories ORDER BY sort_order, id')).map((r) => ({ value: r.id, label: r.name_zh }));
+}
+if (def.fields.some((f) => f.options === 'brands')) {
+  options.brands = (await all<{ id: number; name: string }>(db, 'SELECT id, name FROM brands ORDER BY name')).map((r) => ({ value: r.id, label: r.name }));
+}
+
+// 型錄頁編輯時列出底下產品的捷徑
+let productLink: string | null = null;
+if (def.key === 'catalog-pages' && !isNew) productLink = `/admin/products?page_id=${idParam}`;
+
+const heading = isNew ? `新增${def.label}` : `編輯${def.label}`;
+const saved = Astro.url.searchParams.get('saved') === '1';
+const clientFields = def.fields.map((f) => ({ ...f }));
+---
+<Admin title={heading} active={def.key} crumb={`${def.label} / ${isNew ? '新增' : String(initial[def.titleField] ?? idParam)}`}>
+  <div class="page-h">
+    <div><h1>{heading}</h1>{!isNew && <p class="mono">{def.table} #{idParam}</p>}</div>
+    <div style="display:flex;gap:10px">
+      {productLink && <a class="btn ghost" href={productLink}>查看此頁產品</a>}
+      <a class="btn ghost" href={`/admin/${def.key}`}>← 返回列表</a>
+    </div>
+  </div>
+  {saved && <div class="flash ok">已儲存</div>}
+  <ResourceForm
+    client:load
+    resource={def.key}
+    label={def.label}
+    fields={clientFields}
+    options={options}
+    initial={initial}
+    isNew={isNew}
+    idValue={isNew ? '' : idParam}
+    canDelete={def.canDelete && !isNew}
+    deleteWarn={def.deleteWarn ?? ''}
+  />
+</Admin>

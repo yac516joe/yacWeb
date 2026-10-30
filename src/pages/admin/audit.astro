@@ -1,0 +1,73 @@
+---
+import Admin from '../../layouts/Admin.astro';
+import { all, first, getDb } from '../../lib/db';
+
+export const prerender = false;
+
+const PAGE = 50;
+const db = getDb(Astro.locals);
+const q = (Astro.url.searchParams.get('q') ?? '').trim();
+const action = Astro.url.searchParams.get('action') ?? '';
+const want = Math.max(1, Number(Astro.url.searchParams.get('page') ?? 1) || 1);
+
+const where: string[] = [];
+const params: unknown[] = [];
+if (q) {
+  const like = `%${q.replace(/[%_]/g, '')}%`;
+  where.push('(actor LIKE ? OR target_table LIKE ? OR target_id = ?)');
+  params.push(like, like, q);
+}
+if (action) {
+  where.push('action = ?');
+  params.push(action);
+}
+const w = where.length ? `WHERE ${where.join(' AND ')}` : '';
+const total = (await first<{ n: number }>(db, `SELECT COUNT(*) AS n FROM admin_audit_logs ${w}`, ...params))?.n ?? 0;
+const pages = Math.max(1, Math.ceil(total / PAGE));
+const page = Math.min(want, pages);
+const rows = await all<{ id: number; actor: string; action: string; target_table: string; target_id: string | null; diff_json: string | null; ip_address: string | null; created_at: string }>(
+  db,
+  `SELECT * FROM admin_audit_logs ${w} ORDER BY id DESC LIMIT ${PAGE} OFFSET ${(page - 1) * PAGE}`,
+  ...params,
+);
+const qs = (p: number) => {
+  const u = new URLSearchParams();
+  if (q) u.set('q', q);
+  if (action) u.set('action', action);
+  u.set('page', String(p));
+  return `?${u}`;
+};
+const actions = ['CREATE', 'UPDATE', 'DELETE', 'IMPORT', 'LOGIN', 'LOGIN_FAIL'];
+---
+<Admin title="操作紀錄" active="audit">
+  <div class="page-h"><div><h1>操作紀錄</h1><p>所有新增、修改、刪除、匯入與登入皆會留下紀錄（唯讀）</p></div></div>
+  <div class="card">
+    <form class="toolbar" method="get">
+      <input name="q" value={q} placeholder="搜尋帳號、資料表、編號" />
+      <select name="action">
+        <option value="">全部動作</option>
+        {actions.map((a) => <option value={a} selected={a === action}>{a}</option>)}
+      </select>
+      <button class="btn ghost" type="submit">篩選</button>
+    </form>
+    <div class="scroll-x">
+      <table class="grid">
+        <thead><tr><th>時間 (UTC)</th><th>帳號</th><th>動作</th><th>對象</th><th>IP</th><th>內容</th></tr></thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr>
+              <td class="mono">{r.created_at}</td><td>{r.actor}</td><td><span class="pill off">{r.action}</span></td>
+              <td class="mono">{r.target_table}{r.target_id ? ` #${r.target_id}` : ''}</td><td class="mono">{r.ip_address ?? ''}</td>
+              <td>{r.diff_json && <pre class="diff">{r.diff_json}</pre>}</td>
+            </tr>
+          ))}
+          {!rows.length && <tr><td colspan="6" class="empty">沒有符合的紀錄</td></tr>}
+        </tbody>
+      </table>
+    </div>
+    <div class="pager">
+      <span>共 {total.toLocaleString()} 筆 · 第 {page}/{pages} 頁</span>
+      <span><a class={page <= 1 ? 'dis' : ''} href={qs(page - 1)}>上一頁</a><a class={page >= pages ? 'dis' : ''} href={qs(page + 1)}>下一頁</a></span>
+    </div>
+  </div>
+</Admin>

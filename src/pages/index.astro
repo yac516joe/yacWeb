@@ -1,0 +1,115 @@
+---
+import Base from '../layouts/Base.astro';
+import { getDb } from '../lib/db';
+import { getCategories, getCategoryCovers, getHomeStats, getNews, getSitePage } from '../lib/queries';
+
+const db = getDb(Astro.locals);
+const [cats, covers, stats, home, news] = await Promise.all([
+  getCategories(db),
+  getCategoryCovers(db),
+  getHomeStats(db),
+  getSitePage<{ heroTitle?: string; heroSubtitle?: string; quality?: { title: string; text: string }[] }>(db, 'home'),
+  getNews(db, 3),
+]);
+const c = home?.content ?? {};
+const heroLines = (c.heroTitle ?? '傳動與底盤零件，\n精準對應每一款車型。').split('\n');
+const tiles = cats.slice(0, 4);
+const rest = cats.slice(4);
+const cls = ['t-a', 't-b', 't-c', 't-d'];
+const num = (n: number) => String(n).padStart(2, '0');
+const heroImg = covers['cvj'] ?? covers[cats[0]?.slug ?? ''] ?? '';
+const quality = c.quality ?? [];
+---
+<Base nav="home">
+  <section class="hero">
+    <div class="glow"></div>
+    <div class="ring" style="width:520px;height:520px;right:40px;top:-60px"></div>
+    <div class="ring" style="width:720px;height:720px;right:-60px;top:-160px"></div>
+    <div class="wrap hero-in">
+      <div>
+        <div class="eyebrow"><i></i>TAIWAN EXCELLENCE · SINCE 1999</div>
+        <h1>{heroLines.map((l, i) => <>{i > 0 && <br />}{i === 0 ? <em>{l}</em> : l}</>)}</h1>
+        <p class="lead">{c.heroSubtitle}</p>
+        <div class="cta">
+          <a class="btn" href="/catalog">瀏覽產品型錄 <span class="arr">→</span></a>
+          <a class="btn ghost" href="/inquiry">詢價單</a>
+        </div>
+      </div>
+      <div class="vis">
+        <div class="disc">{heroImg && <img src={heroImg} alt="YAC 等速接頭" />}</div>
+        <div class="tag" style="left:6%;top:50px"><b>{stats.products.toLocaleString('en-US')}</b> 個料號</div>
+        <div class="tag" style="right:2%;top:120px"><b>{stats.categories}</b> 大產品線</div>
+        <div class="tag" style="left:12%;bottom:30px"><b>{stats.refs.toLocaleString('en-US')}</b> 筆 OEM 對照</div>
+      </div>
+    </div>
+  </section>
+
+  <form class="finder wrap" action="/search" method="get" role="search">
+    <h2><span>PART FINDER</span>料號 / 車型查詢</h2>
+    <div class="fld"><label for="q">YAC / OEM 料號</label><input id="q" name="q" placeholder="例：AA-02、43410-" autocomplete="off" /></div>
+    <div class="fld"><label for="model">車型</label><input id="model" name="model" placeholder="例：Corolla、Civic" autocomplete="off" /></div>
+    <div class="fld">
+      <label for="cat">產品線</label>
+      <select id="cat" name="cat">
+        <option value="">全部</option>
+        {cats.map((x) => <option value={x.slug}>{x.name_zh}</option>)}
+      </select>
+    </div>
+    <button class="btn" type="submit">查詢 <span class="arr">→</span></button>
+  </form>
+
+  <section class="sec">
+    <div class="sec-h">
+      <h2><small>PRODUCT LINES</small>{stats.categories} 大產品線</h2>
+      <a href="/catalog">查看全部 →</a>
+    </div>
+    <div class="bento">
+      {tiles.map((t, i) => (
+        <a class={`tile ${cls[i]}`} href={`/catalog/${t.slug}`}>
+          <span class="no">{num(i + 1)}</span><span class="go">↗</span>
+          {covers[t.slug] && <img src={covers[t.slug]} alt="" loading="lazy" />}
+          <div><h3>{t.name_zh}</h3><p>{t.name_en} · {t.product_count} 型號</p></div>
+        </a>
+      ))}
+      {rest.length > 0 && (
+        <div class="tile t-s">
+          <span class="no">05–{num(cats.length)}</span><h3>其他產品線</h3>
+          <div class="chips">{rest.map((r) => <a href={`/catalog/${r.slug}`}>{r.name_zh}</a>)}</div>
+        </div>
+      )}
+    </div>
+    <div class="metrics">
+      <div><b>{stats.products.toLocaleString('en-US')}<sup>+</sup></b><span>產品料號</span></div>
+      <div><b>{stats.brands}</b><span>適用車廠</span></div>
+      <div><b>{stats.refs.toLocaleString('en-US')}<sup>+</sup></b><span>OEM / 跨品牌對照</span></div>
+      <div><b>{stats.categories}</b><span>產品線</span></div>
+    </div>
+  </section>
+
+  {quality.length > 0 && (
+    <section class="sec">
+      <div class="sec-h"><h2><small>QUALITY</small>品質與認證</h2><a href="/about">關於 YAC →</a></div>
+      <div class="qual">
+        <img src="/pics/company-1s.jpg" alt="YAC 工廠" loading="lazy" />
+        <div class="tx">
+          <p>1999 年起，YAC 傳動軸為台灣同業界唯一獲得「台灣精品獎」推薦的品牌。</p>
+          <ul>{quality.map((q, i) => <li><i>{num(i + 1)}</i><span>{q.title}<small>{q.text}</small></span></li>)}</ul>
+        </div>
+      </div>
+    </section>
+  )}
+
+  {news.length > 0 && (
+    <section class="sec">
+      <div class="sec-h"><h2><small>WHAT'S NEW</small>最新產品</h2><a href="/news">全部消息 →</a></div>
+      <div class="news-grid">
+        {news.map((n) => (
+          <a class="card" href={`/news/${n.slug}`}>
+            <div class="thumb">{n.cover_image_url && <img src={n.cover_image_url} alt={n.title_zh} loading="lazy" />}</div>
+            <div class="cb"><time>{n.published_at.slice(0, 10)}</time><h3>{n.title_zh}</h3>{n.summary && <p>{n.summary}</p>}</div>
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
+</Base>

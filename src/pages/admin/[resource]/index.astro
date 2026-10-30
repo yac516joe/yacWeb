@@ -1,0 +1,52 @@
+---
+import Admin from '../../../layouts/Admin.astro';
+import { RESOURCES } from '../../../lib/admin-resources';
+import { getDb } from '../../../lib/db';
+import { listRows } from '../../../lib/admin-crud';
+
+export const prerender = false;
+
+const def = RESOURCES[Astro.params.resource ?? ''];
+if (!def) return new Response('Not found', { status: 404 });
+
+const q = (Astro.url.searchParams.get('q') ?? '').trim();
+const want = Number(Astro.url.searchParams.get('page') ?? 1) || 1;
+const { rows, total, page, pages } = await listRows(getDb(Astro.locals), def, { q, page: want });
+const qs = (p: number) => `?${new URLSearchParams({ ...(q ? { q } : {}), page: String(p) })}`;
+const idOf = (r: Record<string, unknown>) => String(r[def.pk]);
+---
+<Admin title={def.label} active={def.key}>
+  <div class="page-h">
+    <div><h1>{def.label}</h1><p>共 {total.toLocaleString()} 筆</p></div>
+    {def.canCreate && <a class="btn" href={`/admin/${def.key}/new`}>＋ 新增</a>}
+  </div>
+  <div class="card">
+    <form class="toolbar" method="get">
+      <input name="q" value={q} placeholder="搜尋…" />
+      <button class="btn ghost" type="submit">搜尋</button>
+      {q && <a href={`/admin/${def.key}`} class="mono" style="font-size:12px">清除</a>}
+    </form>
+    <div class="scroll-x">
+      <table class="grid">
+        <thead><tr>{def.listCols.map((c) => <th>{c.label}</th>)}<th></th></tr></thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr>
+              {def.listCols.map((c) => (
+                <td class={c.kind === 'mono' ? 'mono' : ''}>
+                  {c.kind === 'bool' ? <span class={`pill ${r[c.name] ? 'on' : 'off'}`}>{r[c.name] ? '是' : '否'}</span> : String(r[c.name] ?? '')}
+                </td>
+              ))}
+              <td class="act"><a class="btn ghost sm" href={`/admin/${def.key}/${encodeURIComponent(idOf(r))}`}>編輯</a></td>
+            </tr>
+          ))}
+          {!rows.length && <tr><td colspan={def.listCols.length + 1} class="empty">沒有符合的資料</td></tr>}
+        </tbody>
+      </table>
+    </div>
+    <div class="pager">
+      <span>第 {page}/{pages} 頁</span>
+      <span><a class={page <= 1 ? 'dis' : ''} href={qs(page - 1)}>上一頁</a><a class={page >= pages ? 'dis' : ''} href={qs(page + 1)}>下一頁</a></span>
+    </div>
+  </div>
+</Admin>

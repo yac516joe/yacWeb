@@ -1,0 +1,44 @@
+---
+import Base from '../layouts/Base.astro';
+import { getDb } from '../lib/db';
+import { getCategories, searchProducts } from '../lib/queries';
+
+const db = getDb(Astro.locals);
+const sp = Astro.url.searchParams;
+const q = (sp.get('q') ?? '').slice(0, 80);
+const model = (sp.get('model') ?? '').slice(0, 80);
+const cat = sp.get('cat') ?? '';
+const [cats, hits] = await Promise.all([getCategories(db), searchProducts(db, { q, model, category: cat || undefined })]);
+const searched = Boolean(q || model || cat);
+---
+<Base nav="catalog" title="料號 / 車型查詢" noindex={searched}>
+  <nav class="crumb"><a href="/">首頁</a> / <b>查詢</b></nav>
+  <div class="cat-head"><div><h1>料號 / 車型查詢</h1><p>可輸入 YAC 料號、OEM 料號、Spicer / GMB 對照號或車型，多個關鍵字以空白分隔</p></div></div>
+  <form class="search-bar" action="/search" method="get" role="search">
+    <div class="fld"><label for="q">YAC / OEM 料號</label><input id="q" name="q" value={q} autocomplete="off" /></div>
+    <div class="fld"><label for="model">車型</label><input id="model" name="model" value={model} autocomplete="off" /></div>
+    <div class="fld" style="flex:0 1 200px">
+      <label for="cat">產品線</label>
+      <select id="cat" name="cat"><option value="">全部</option>{cats.map((c) => <option value={c.slug} selected={c.slug === cat}>{c.name_zh}</option>)}</select>
+    </div>
+    <button class="btn" type="submit">查詢 <span class="arr">→</span></button>
+  </form>
+  <div style="height:24px"></div>
+  {searched && (
+    <>
+      <p class="mono" style="padding:0 var(--pad) 10px;color:var(--mute);font-size:12px">找到 {hits.length}{hits.length >= 120 ? '+' : ''} 筆結果</p>
+      {hits.length === 0 ? <p class="empty">找不到符合的料號，請嘗試較短的關鍵字或移除產品線篩選。</p> : (
+        <div class="results">
+          {hits.map((h) => (
+            <a class="result" href={`/catalog/${h.category_slug}/${h.page_slug}?p=${h.id}`}>
+              {h.primary_image_url ? <img class="thumb-s" src={h.primary_image_url} alt="" loading="lazy" onerror="this.style.visibility='hidden'" /> : <span></span>}
+              <span class="pn">{h.yac_no}{h.yac_no_left && <small>{h.yac_no_left}</small>}</span>
+              <span>{h.summary || h.car_series || h.page_title}</span>
+              <small>{h.category_name} · {h.page_title}</small>
+            </a>
+          ))}
+        </div>
+      )}
+    </>
+  )}
+</Base>

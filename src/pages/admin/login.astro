@@ -1,0 +1,60 @@
+---
+import '../../styles/admin.css';
+import { authMode, resolveAdmin } from '../../lib/auth';
+import { getEnv } from '../../lib/db';
+
+export const prerender = false;
+
+const env = getEnv(Astro.locals);
+if (await resolveAdmin(Astro.request, env)) return Astro.redirect('/admin');
+
+const err = Astro.url.searchParams.get('err');
+const nextRaw = Astro.url.searchParams.get('next') ?? '';
+const next = nextRaw.startsWith('/admin') && !nextRaw.startsWith('//') ? nextRaw : '/admin';
+const mode = authMode(env);
+const messages: Record<string, string> = {
+  bad: '帳號或密碼錯誤',
+  blocked: '登入失敗次數過多，請 15 分鐘後再試',
+  config: '後台尚未設定帳號（ADMIN_USERNAME / ADMIN_PASSWORD_HASH / SESSION_SECRET）',
+  mode: '目前僅允許 Cloudflare Access 登入',
+};
+---
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>登入 | YAC 後台</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body>
+    <div class="login-wrap">
+      <div class="login">
+        <div class="side-brand">
+          <div class="mark">YAC</div>
+          <div><b>華佑科技</b><span>ADMIN CONSOLE</span></div>
+        </div>
+        <h1>後台登入</h1>
+        <p class="sub-t">請輸入管理員帳號與密碼</p>
+        {err && <div class="flash err" role="alert">{messages[err] ?? '登入失敗'}</div>}
+        {mode === 'cf_access' ? (
+          <p class="sub-t">請透過 Cloudflare Access 驗證後進入後台。</p>
+        ) : (
+          <form method="post" action="/api/admin/login">
+            <input type="hidden" name="next" value={next} />
+            <div class="fld">
+              <label for="u">帳號</label>
+              <input id="u" name="username" type="text" autocomplete="username" required autofocus />
+            </div>
+            <div class="fld">
+              <label for="p">密碼</label>
+              <input id="p" name="password" type="password" autocomplete="current-password" required />
+            </div>
+            <button class="btn" type="submit">登入</button>
+          </form>
+        )}
+      </div>
+    </div>
+  </body>
+</html>

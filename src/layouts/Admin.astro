@@ -1,0 +1,87 @@
+---
+import '../styles/admin.css';
+
+interface Props {
+  title: string;
+  active?: string;
+  crumb?: string;
+}
+const { title, active = '', crumb = '' } = Astro.props;
+const admin = Astro.locals.admin;
+const via = admin?.via;
+
+const nav: { group: string; items: { key: string; label: string; href: string }[] }[] = [
+  { group: '總覽', items: [{ key: 'dashboard', label: '儀表板', href: '/admin' }] },
+  {
+    group: '型錄',
+    items: [
+      { key: 'products', label: '產品', href: '/admin/products' },
+      { key: 'catalog-pages', label: '型錄頁', href: '/admin/catalog-pages' },
+      { key: 'categories', label: '產品線', href: '/admin/categories' },
+      { key: 'brands', label: '車廠', href: '/admin/brands' },
+      { key: 'import', label: 'CSV 匯入匯出', href: '/admin/import' },
+    ],
+  },
+  {
+    group: '內容',
+    items: [
+      { key: 'news', label: '最新產品／消息', href: '/admin/news' },
+      { key: 'site-pages', label: '站內頁面', href: '/admin/site-pages' },
+      { key: 'media', label: '圖片庫', href: '/admin/media' },
+    ],
+  },
+  { group: '系統', items: [{ key: 'audit', label: '操作紀錄', href: '/admin/audit' }] },
+];
+---
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>{title} | YAC 後台</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="side" id="side">
+        <div class="side-brand">
+          <div class="mark">YAC</div>
+          <div><b>華佑科技</b><span>ADMIN CONSOLE</span></div>
+        </div>
+        <nav>
+          {nav.map((g) => (
+            <>
+              <h6>{g.group}</h6>
+              {g.items.map((i) => <a href={i.href} class={active === i.key ? 'on' : ''}>{i.label}</a>)}
+            </>
+          ))}
+        </nav>
+        <div class="side-foot">
+          <b>{admin?.username}</b>
+          {via === 'cf_access' ? 'Cloudflare Access' : '帳號密碼登入'}
+          {via === 'session' && (
+            <form method="post" action="/api/admin/logout"><button class="btn ghost sm" type="submit">登出</button></form>
+          )}
+        </div>
+      </aside>
+      <div class="main">
+        <header class="top">
+          <div style="display:flex;gap:12px;align-items:center">
+            <button class="menu-btn" type="button" id="menu">選單</button>
+            <div class="crumbs">後台 / <b>{crumb || title}</b></div>
+          </div>
+          <a class="view" href="/" target="_blank" rel="noopener">查看網站 ↗</a>
+        </header>
+        <div class="content"><slot /></div>
+      </div>
+    </div>
+    <script is:inline>
+      document.getElementById('menu')?.addEventListener('click', function () { document.getElementById('side')?.classList.toggle('open'); });
+      document.addEventListener('click', function (e) {
+        var s = document.getElementById('side');
+        if (s && s.classList.contains('open') && !s.contains(e.target) && e.target.id !== 'menu') s.classList.remove('open');
+      });
+    </script>
+  </body>
+</html>

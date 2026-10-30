@@ -1,6 +1,7 @@
 # YAC 華佑科技（www.yac.com.tw）網站動態化與後台管理系統規劃書 (`docs/PLAN.md`)
 
-> **版本**：v1.0（Phase 1 架構評估與規劃）
+> **版本**：v1.1（Phase 1 規劃；v1.1 補上 Phase 2–4 實作後與初稿的差異）
+> **實作差異摘要（以 `AGENTS.md` 為準）**：① 以原生 D1 prepared statements + 薄型別層取代 Drizzle，樣式為手寫 CSS 設計系統（非 Tailwind）；② 核心抽象為 `catalog_pages`（一列＝舊站一張規格表，`columns_json` 定義欄位），規格存 `products.specs_json`；③ Session 為無狀態 HMAC 簽章 Cookie（8 小時）＋ D1 登入限流，另支援 Cloudflare Access JWT；④ 詢價為 localStorage 詢價單 + `mailto:`；⑤ 舊靜態檔仍留在根目錄（非 `site/`），建置時僅複製非 HTML 資產，舊 `.html` 由 D1 `legacy_redirects` 301；⑥ 後台 CSV 每筆車款一列、依 YAC 料號 upsert、單次上限 200 產品；⑦ `news_posts.content_html` 以 HTML 輸出（僅管理員可編輯）。
 > **目標**：將現有純靜態 HTML 網站全面升級為 **Cloudflare Pages / Workers + D1 資料庫 + R2 圖床** 之動態網站，提供全站繁體中文（含國際汽配專業術語對照）的前台型錄查詢系統，以及支援新增、修改、刪除與批次匯入的後台管理系統（CMS）。
 
 ---
@@ -407,20 +408,21 @@ flowchart LR
 - [ ] 與使用者確認技術選型（Astro + D1）與前後台 UI 設計風格。
 
 ### Phase 2：專案骨幹、D1 Schema Migration 與舊資料自動匯入（PR #2）
-- [ ] 初始化 Astro + TypeScript + Tailwind CSS + Drizzle ORM 設定與 `wrangler.toml`。
-- [ ] 建立 `migrations/0001_initial_schema.sql` 並通過本機 D1 測試。
-- [ ] 開發 `scripts/migrate-legacy-html.ts` 解析全部舊 HTML 表格，產出 Seed SQL 與驗收報告（確保舊 `site/` 檔案完全不動）。
+- [x] 初始化 Astro + TypeScript + `wrangler.toml`（未採 Tailwind / Drizzle，見上方差異摘要）。
+- [x] 建立 `migrations/0001_initial_schema.sql` 並通過本機 D1 測試。
+- [x] 開發 `scripts/migrate-legacy-html.ts` 解析全部舊 HTML 表格，產出 Seed SQL 與驗收報告（舊靜態檔完全不動）。
 
 ### Phase 3：前台動態網站、智慧搜尋與舊網址 301 轉址（PR #3）
-- [ ] 實作全站繁體中文前台：首頁、11 大產品線導覽、各車廠動態規格表、圖片 Lightbox 預覽、公司簡介與最新產品頁。
-- [ ] 實作跨類別智慧搜尋 API（支援 YAC 料號、OEM 號、Spicer/GMB 號、車型模糊與精準查詢）。
-- [ ] 實作全站 547 個舊 `.html` 網址的 301 轉址與自動測試驗證。
+- [x] 實作全站繁體中文前台：首頁、11 大產品線導覽、各車廠動態規格表、圖片 Lightbox 預覽、公司簡介與最新產品頁。
+- [x] 實作跨類別智慧搜尋 API（支援 YAC 料號、OEM 號、Spicer/GMB 號、車型模糊與精準查詢）。
+- [x] 實作全站 547 個舊 `.html` 網址的 301 轉址。
 
 ### Phase 4：後台管理系統（登入驗證 + CRUD + R2 圖片上傳 + 批次匯入）（PR #4）
-- [ ] 實作後台身分驗證中介層（支援環境變數帳密 + Session 及 Cloudflare Access）。
-- [ ] 實作產品 CRUD、動態規格表單、適用車款與 OEM 對照號編輯器。
-- [ ] 實作 R2 圖片上傳、最新消息 CRUD、公司頁面編輯、CSV 批次匯入匯出與稽核日誌。
+- [x] 實作後台身分驗證中介層（支援環境變數帳密 + Session 及 Cloudflare Access）。
+- [x] 實作產品 CRUD、動態規格表單、適用車款與 OEM 對照號編輯器。
+- [x] 實作 R2 圖片上傳、最新消息 CRUD、公司頁面編輯、CSV 批次匯入匯出與稽核日誌。
 
 ### Phase 5：Staging 雙軌驗證與正式切換上線（PR #5）
+- [ ] 建立真實 Cloudflare D1 / R2 / secrets，套用遠端 migration 並匯入 seed。
 - [ ] 在 Cloudflare Pages Preview 環境完整驗證前台搜尋、後台增刪改、舊連結 301 轉址與手機版體驗。
 - [ ] 切換 GitHub Actions 部署流程至新版動態架構，完成正式上線。

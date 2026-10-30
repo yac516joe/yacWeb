@@ -1,0 +1,17 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getDb } from '../../lib/db';
+import { getNewsPost } from '../../lib/queries';
+
+const post = await getNewsPost(getDb(Astro.locals), Astro.params.slug!);
+if (!post) return new Response(null, { status: 404 });
+---
+<Base nav="news" title={post.title_zh} description={post.summary || post.title_zh}>
+  <nav class="crumb"><a href="/">首頁</a> / <a href="/news">最新產品</a> / <b>{post.title_zh}</b></nav>
+  <div class="page-h"><h1>{post.title_zh}</h1><p>{post.published_at.slice(0, 10)}</p></div>
+  <div class="prose">
+    {post.cover_image_url && <img src={post.cover_image_url} alt={post.title_zh} style="max-width:560px;border:1px solid var(--line);background:#fff" />}
+    {post.summary && <p>{post.summary}</p>}
+    <div class="rich" set:html={post.content_html}></div>
+  </div>
+</Base>

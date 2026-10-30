@@ -1,0 +1,17 @@
+name = "yac-website"
+pages_build_output_dir = "./dist"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# database_id 為佔位值：本機 (--local) 不需實際 UUID；
+# 正式部署前請以 `wrangler d1 create yac-website-db` 取得 UUID 並由 CI 以 D1_DATABASE_ID 注入。
+[[d1_databases]]
+binding = "DB"
+database_name = "yac-website-db"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
+
+# 若尚未建立 R2 Bucket，本機開發仍可運作（上傳功能將改存為 D1 暫存 / 顯示未啟用）。
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "yac-website-media"

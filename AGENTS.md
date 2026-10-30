@@ -9,15 +9,16 @@
 - **網站名稱**：YAC 華佑科技 / 永源汽車零件公司官方網站（`www.yac.com.tw`）
 - **改造目標**：將原本純靜態 HTML 網站（11 大汽車傳動與底盤零件產品線、547 個 `.html` 頁面、7,840+ 張產品圖）升級為具備資料庫與後台管理系統（CMS）的全站繁體中文動態網站。
 - **核心技術棧（Cloudflare 免費方案優先）**：
-  - **框架**：Astro 5（SSR Server Output + `@astrojs/cloudflare` Adapter）+ Tailwind CSS + Preact/React Islands（後台高互動介面）
-  - **資料庫**：Cloudflare D1（SQLite）+ Drizzle ORM
+  - **框架**：Astro 5（SSR Server Output + `@astrojs/cloudflare` Adapter）+ 原生 CSS 設計系統 + Preact Islands（後台高互動介面）
+  - **資料庫**：Cloudflare D1（SQLite），以原生 prepared statements + 薄型別查詢層存取（未使用 Drizzle）
   - **圖片與媒體儲存**：靜態歷史圖檔保留原路徑相容，新增/修改圖片儲存於 Cloudflare R2（或 Pages Assets）
   - **後台驗證**：支援 Cloudflare Access（Zero Trust）與內建環境變數帳密 + Signed Session Cookie（密碼雜湊存於環境變數/Secrets，絕不硬編碼於程式中）
 - **目錄結構規範**：
   - `docs/PLAN.md`：系統架構、D1 資料表設計、UI 格式參考、資料匯入與上線計畫
   - `migrations/`：Cloudflare D1 SQL 結構遷移檔（依序命名如 `0001_initial_schema.sql`）
-  - `scripts/`：舊版靜態 HTML 自動解析與匯入 D1 之腳本
-  - `site/`（或根目錄既有靜態 HTML 資料夾）：**在新版正式切換上線前必須保持原狀不動，確保正式網站不中斷**
+  - `scripts/`：舊版靜態 HTML 自動解析與匯入 D1 之腳本、密碼雜湊工具
+  - `src/`、`public/`、`integrations/`、`tests/`：動態網站原始碼（Astro）、靜態資源、舊站資產整合、單元測試
+  - 根目錄既有的舊靜態資料夾（`cvj/`、`ds/`、`hubs/`、`img/`、`pics/` 等 `.html` 與圖片）：**在新版正式切換上線前必須保持原狀不動**；新站建置時只會複製其中的非 HTML 資產，舊 `.html` 由 301 轉址取代
 
 ---
 
@@ -39,31 +40,47 @@
 
 ## 3. 常用指令（Commands）
 
-> *註：Phase 1 為純規劃階段，以下指令將於 Phase 2 初始化 Astro + Wrangler 專案結構後生效。*
+> 需要 Node 20+（建議 22 LTS）。**Windows ARM64 請改用 x64 版 Node**（workerd 沒有 ARM64 Windows 版本）。
 
 ```bash
 # 1. 安裝相依套件
 npm install
 
-# 2. 套用本機 D1 資料庫 Migrations
-npx wrangler d1 migrations apply yac-website-db --local
+# 2. 建立本機機密：複製範本並產生密碼雜湊
+cp .env.example .dev.vars          # PowerShell：Copy-Item .env.example .dev.vars
+npm run auth:hash -- "你的密碼"     # 輸出 ADMIN_PASSWORD_HASH，貼入 .dev.vars
 
-# 3. 執行舊版 HTML 解析並匯入本機 D1 資料庫
+# 3. 建立本機 D1：套用 migrations → 解析舊 HTML → 匯入（約 1 分鐘）
 npm run db:seed:local
+#    （僅重新解析舊站：npm run db:import:legacy，輸出 docs/MIGRATION_REPORT.md）
 
-# 4. 啟動本機開發伺服器 (含 Cloudflare Pages / D1 / R2 本地模擬)
-npm run dev
+# 4. 啟動本機開發伺服器（Astro dev + 本機 D1 / R2 模擬）
+npm run dev                         # 前台 http://localhost:4321、後台 /admin
 
-# 5. 執行型別檢查、單元測試與轉址連結檢查
+# 5. 型別檢查與單元測試
 npm run check
 npm test
 
-# 6. 建置生產環境版本
+# 6. 建置（同時把舊站圖片 / CAD / PDF 複製進 dist/，舊 .html 不會被部署）
 npm run build
+npm run preview                     # wrangler pages dev dist
 
-# 7. 部署至 Cloudflare Pages (通常由 GitHub Actions 自動執行)
-npx wrangler pages deploy dist --project-name=yac-website
+# 7. 遠端 D1 migration 與部署（正式資源建立後；通常由 GitHub Actions 執行）
+npm run db:migrate:remote
+npm run deploy
 ```
+
+### 架構摘要（Phase 2–4 實作結果）
+
+- `src/pages/`：前台（`index`、`catalog/[category]/[slug]`、`search`、`news/*`、`about`、`contact`、`inquiry`）、後台（`admin/**`）、API（`api/search`、`api/csv`、`api/admin/**`）、R2 圖片出口（`media/[...key]`）。
+- `src/middleware.ts`：舊 `.html` 網址 301（查 D1 `legacy_redirects`）、`/api/*` 非 GET 的 Origin（CSRF）檢查、`/admin/*` 與 `/api/admin/*` 驗證守衛（後台回應一律 `no-store` + `noindex`）。
+- `src/lib/`：`db`（D1 輔助）、`queries`（讀取層）、`columns` / `table`（型錄表格欄位邏輯）、`auth`（PBKDF2 密碼、HMAC Session、Cloudflare Access JWT、登入限流）、`admin-*`（後台資源註冊、CRUD、產品 / CSV 匯入）。
+- **核心抽象 `catalog_pages`**：一列＝舊站一張規格表；`columns_json` 定義欄位順序，每欄的 `source` 為 `yac | yac_left | photo | remark | app.<欄> | ref.<類型> | spec.<鍵>`。產品規格存於 `products.specs_json`（鍵為小寫），車款與 OEM / 對照號另存子表。新增型錄頁＝新增一列＋定義欄位，無需改程式。
+- `src/islands/`：Preact islands（`Inquiry`；`admin/*` 的表單、產品編輯器、圖片庫、CSV 匯入）。
+- 樣式：`src/styles/global.css`（前台）、`admin.css`（後台）；設計定案見 `docs/PLAN.md` §3.0（淺色工業藍、零圓角）。
+- 與 PLAN 初稿的差異：以原生 D1 prepared statements + 薄型別層取代 Drizzle；Session 為無狀態簽章 Cookie（8 小時）；詢價採 localStorage 詢價單 + `mailto:`（不另存資料庫）。
+- 後台 CSV：每筆適用車款一列，依 YAC 料號 upsert，不刪除；單次上限 200 個產品（免費方案 subrequest 限制）。
+- `news_posts.content_html` 以 HTML 原樣輸出，僅限已登入管理員編輯。
 
 ---
 
@@ -95,14 +112,16 @@ npx wrangler pages deploy dist --project-name=yac-website
   - [x] 產出 `docs/PLAN.md`（含 Mermaid 架構圖、D1 ER 圖與資料表設計、前後台 UI 格式參考、舊資料自動匯入流程、547 個舊網址 301 轉址策略、分階段上線步驟）。
   - [x] 建立 `AGENTS.md` 與 `.env.example`。
 
+- [x] **Phase 2：專案骨幹與資料庫**（Astro 5 + Wrangler、`migrations/0001_initial_schema.sql`、`scripts/migrate-legacy-html.ts`）
+  - 匯入結果：547 個 HTML、99 車廠、395 型錄頁、8,679 產品、7,759 適用車款、10,974 對照號、547 筆 301 轉址，0 警告（`docs/MIGRATION_REPORT.md`）。
+- [x] **Phase 3：前台**（首頁、11 大產品線型錄、規格表、搜尋、最新產品、公司簡介、聯絡、詢價單、404、舊網址 301）
+- [x] **Phase 4：後台 CMS**（帳密 Session / Cloudflare Access、產品與規格 CRUD、型錄頁 / 產品線 / 車廠 / 消息 / 站內頁面管理、R2 圖片庫、CSV 匯入匯出、操作紀錄）
+- [x] 型別檢查（`astro check`）0 錯誤；單元測試（`npm test`）通過；`npm run build` 成功。
+
 ### 待辦事項 (Backlog / Next Steps)
-- [ ] **Phase 2：專案初始化與資料庫建置**
-  - [ ] 與環境設定 Agent 協同確認儲存庫目錄結構（`site/` vs 根目錄靜態檔）與 Cloudflare D1 / Pages 綁定。
-  - [ ] 建立 Astro + Drizzle + Wrangler 專案結構與 `migrations/0001_initial_schema.sql`。
-  - [ ] 撰寫並執行 `scripts/migrate-legacy-html.ts`，將舊 HTML 產品與規格匯入 D1 並產出筆數核對報告。
-- [ ] **Phase 3：前台型錄與搜尋系統開發**
-  - [ ] 實作全站繁體中文前台（首頁、11 大產品線、車廠規格表、圖片 Lightbox、最新產品、公司簡介）。
-  - [ ] 實作跨類別智慧搜尋（YAC No. / OEM No. / Spicer·GMB 號 / 車型）與舊網址 301 轉址。
-- [ ] **Phase 4：後台管理系統（CMS）開發**
-  - [ ] 實作後台登入驗證、產品與規格 CRUD、R2 圖片上傳、CSV 批次匯入匯出與操作稽核紀錄。
-- [ ] **Phase 5：整合測試與正式上線切換**
+- [ ] **Phase 5：Staging 驗證與正式切換**
+  - [ ] 建立真實 Cloudflare 資源：D1（把 UUID 填入 `wrangler.toml` 的 `database_id`）、R2 bucket `yac-website-media`，並設定 `ADMIN_*` / `SESSION_SECRET` secrets。
+  - [ ] 套用遠端 migration，將本機 `migrations/seed/seed.sql`（`npm run db:import:legacy` 產生）匯入遠端 D1，並把 8 個缺圖（見遷移報告）補齊或移除。
+  - [ ] 更新 GitHub Actions：安裝依賴 → `npm run build` → `wrangler pages deploy dist`；先部署 Preview 雙軌驗證（舊網址 301、搜尋結果與舊站比對）。
+  - [ ] 驗證後切換正式網域；觀察 Search Console 的轉址與 404。舊靜態 `.html` 於穩定後再移除。
+  - [ ] 視需要：詢價單寄信（Email Worker / 第三方）、`news_posts.content_html` 的 HTML 清理、Cloudflare Access 保護 `/admin`。
