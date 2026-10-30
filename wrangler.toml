@@ -3,15 +3,20 @@ pages_build_output_dir = "./dist"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
-# database_id 為佔位值：本機 (--local) 不需實際 UUID；
-# 正式部署前請以 `wrangler d1 create yac-website-db` 取得 UUID 並由 CI 以 D1_DATABASE_ID 注入。
+# 非機密變數（使用 wrangler.toml 時 Pages 不讀取 Dashboard 的明文變數）。
+# ADMIN_PASSWORD_HASH / SESSION_SECRET 為機密，請用 `wrangler pages secret put` 或 Dashboard Secret 設定。
+[vars]
+ADMIN_AUTH_MODE = "session"
+ADMIN_USERNAME = "admin"
+
+# D1 database_id 不是機密，可提交。
 [[d1_databases]]
 binding = "DB"
 database_name = "yac-website-db"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "c5ad53fd-800f-4db8-a584-396f6573e0d5"
 migrations_dir = "migrations"
 
-# 若尚未建立 R2 Bucket，本機開發仍可運作（上傳功能將改存為 D1 暫存 / 顯示未啟用）。
-[[r2_buckets]]
-binding = "MEDIA_BUCKET"
-bucket_name = "yac-website-media"
+# R2 需先在 Cloudflare Dashboard 啟用並建立 bucket（見 docs/DEPLOY.md）；bucket 不存在時 Pages 部署會失敗。
+#[[r2_buckets]]
+#binding = "MEDIA_BUCKET"
+#bucket_name = "yac-website-media"

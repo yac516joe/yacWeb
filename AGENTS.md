@@ -92,7 +92,7 @@ npm run deploy
 | :--- | :---: | :--- |
 | `CLOUDFLARE_ACCOUNT_ID` | CI/CD | Cloudflare 帳戶 ID（供 GitHub Actions 部署與 D1 Migration 使用） |
 | `CLOUDFLARE_API_TOKEN` | CI/CD | Cloudflare API Token（需具備 Pages、D1、R2 權限） |
-| `D1_DATABASE_ID` | 是 | Cloudflare D1 資料庫 UUID（亦對應 `wrangler.toml` binding `DB`） |
+| `D1_DATABASE_ID` | 選填 | D1 UUID，僅供參考；實際值已寫入 `wrangler.toml` binding `DB`（非機密） |
 | `R2_BUCKET_NAME` | 選填 | Cloudflare R2 Bucket 名稱（預設 `yac-website-media`，對應 binding `MEDIA_BUCKET`） |
 | `PUBLIC_MEDIA_BASE_URL` | 選填 | 產品圖片公開 CDN / R2 基礎網址（未設定時預設使用站內相對路徑） |
 | `ADMIN_AUTH_MODE` | 是 | 後台驗證模式：`session`（內建帳密 Session）、`cf_access`（Cloudflare Access）或 `both` |
@@ -120,8 +120,10 @@ npm run deploy
 
 ### 待辦事項 (Backlog / Next Steps)
 - [ ] **Phase 5：Staging 驗證與正式切換**（步驟見 `docs/DEPLOY.md`；工作流程範本在 `docs/workflows/{ci,deploy}.yml`，因推送權杖無 `workflow` 權限，需有權限者複製到 `.github/workflows/`）
-  - [ ] 建立真實 Cloudflare 資源：D1（把 UUID 填入 `wrangler.toml` 的 `database_id`）、R2 bucket `yac-website-media`，並設定 `ADMIN_*` / `SESSION_SECRET` secrets。
-  - [ ] 套用遠端 migration，將本機 `migrations/seed/seed.sql`（`npm run db:import:legacy` 產生）匯入遠端 D1，並把 8 個缺圖（見遷移報告）補齊或移除。
-  - [ ] 更新 GitHub Actions：安裝依賴 → `npm run build` → `wrangler pages deploy dist`；先部署 Preview 雙軌驗證（舊網址 301、搜尋結果與舊站比對）。
+  - [x] 建立遠端 D1 `yac-website-db`（UUID 已寫入 `wrangler.toml`），已設定 Preview 環境的 `ADMIN_PASSWORD_HASH` / `SESSION_SECRET` secrets。
+  - [ ] 在 Cloudflare Dashboard 啟用 R2 並建立 bucket `yac-website-media`，再取消 `wrangler.toml` 內 R2 binding 註解、設定 Production secrets。
+  - [x] 套用遠端 migration 並匯入 seed（products 8679、applications 7759、cross_refs 10840、redirects 547、catalog_pages 395、news 3）。8 個缺圖（見遷移報告）仍待補齊或移除。
+  - [x] 已手動部署 Preview：`https://preview.yac-website.pages.dev`（`--branch=preview`；首頁 / 型錄 / 搜尋 / 舊網址 301 / 舊圖片 / 後台登入皆通過）。
+  - [ ] 把 `docs/workflows/*.yml` 複製到 `.github/workflows/`（需 `workflow` 權限），並比對舊站搜尋結果。
   - [ ] 驗證後切換正式網域；觀察 Search Console 的轉址與 404。舊靜態 `.html` 於穩定後再移除。
   - [ ] 視需要：詢價單寄信（Email Worker / 第三方）、Cloudflare Access 保護 `/admin`。

@@ -4,10 +4,11 @@
 
 ## 1. 建立 Cloudflare 資源
 ```bash
-npx wrangler d1 create yac-website-db        # 記下輸出的 database_id
+npx wrangler d1 create yac-website-db        # 已建立；database_id 已寫入 wrangler.toml（非機密，可提交）
 npx wrangler r2 bucket create yac-website-media
 ```
-- 本機測試遠端綁定時，暫時把 `wrangler.toml` 的 `database_id` 換成實際 UUID（**不要提交**；CI 會以 `D1_DATABASE_ID` secret 注入）。
+- **R2 需先在 Cloudflare Dashboard → R2 啟用**（帳號目前尚未啟用，API 會回 10042）。啟用並建立 bucket 後，取消 `wrangler.toml` 內 `[[r2_buckets]]` 的註解再部署；在此之前圖片上傳 / `/media/*` 不可用（回 501），其餘功能正常。
+- 使用 `wrangler.toml` 時，Pages 不讀取 Dashboard 的明文變數；`ADMIN_AUTH_MODE`、`ADMIN_USERNAME` 寫在 `wrangler.toml` 的 `[vars]`，機密（`ADMIN_PASSWORD_HASH`、`SESSION_SECRET`）才用 Secret 設定。
 
 ## 2. 套用 migration 並匯入資料
 ```bash
@@ -22,12 +23,12 @@ Pages 專案 `yac-website`（Settings → Environment variables，或 `wrangler 
 
 | 名稱 | 值 |
 | :--- | :--- |
-| `ADMIN_AUTH_MODE` | `session`（或 `both`） |
-| `ADMIN_USERNAME` | 管理員帳號 |
+| `ADMIN_AUTH_MODE` | `session`（或 `both`；已在 `wrangler.toml [vars]`） |
+| `ADMIN_USERNAME` | 管理員帳號（已在 `wrangler.toml [vars]`） |
 | `ADMIN_PASSWORD_HASH` | `npm run auth:hash -- "密碼"` 的輸出 |
 | `SESSION_SECRET` | `openssl rand -hex 32` |
 
-GitHub repo Secrets（供 `deploy.yml`；先把 `docs/workflows/*.yml` 複製到 `.github/workflows/`）：`CLOUDFLARE_ACCOUNT_ID`、`CLOUDFLARE_API_TOKEN`（Pages / D1 / R2 編輯權限）、`D1_DATABASE_ID`。
+GitHub repo Secrets（供 `deploy.yml`；先把 `docs/workflows/*.yml` 複製到 `.github/workflows/`）：`CLOUDFLARE_ACCOUNT_ID`、`CLOUDFLARE_API_TOKEN`（Pages / D1 / R2 編輯權限）。
 
 ## 4. Preview 雙軌驗證
 GitHub → Actions → **Deploy to Cloudflare Pages** → Run workflow（branch 預設 `preview`）。檢查：
