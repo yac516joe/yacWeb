@@ -1,0 +1,67 @@
+---
+import Admin from '../../layouts/Admin.astro';
+import { all, first, getDb, getEnv } from '../../lib/db';
+
+export const prerender = false;
+
+const db = getDb(Astro.locals);
+const counts = await first<Record<string, number>>(
+  db,
+  `SELECT (SELECT COUNT(*) FROM products) AS products,
+          (SELECT COUNT(*) FROM products WHERE is_published = 0) AS hidden,
+          (SELECT COUNT(*) FROM catalog_pages) AS pages,
+          (SELECT COUNT(*) FROM categories) AS categories,
+          (SELECT COUNT(*) FROM brands) AS brands,
+          (SELECT COUNT(*) FROM news_posts) AS news,
+          (SELECT COUNT(*) FROM media_assets) AS media`,
+);
+const recent = await all<{ id: number; actor: string; action: string; target_table: string; target_id: string | null; created_at: string }>(
+  db,
+  'SELECT id, actor, action, target_table, target_id, created_at FROM admin_audit_logs ORDER BY id DESC LIMIT 8',
+);
+const r2 = !!getEnv(Astro.locals).MEDIA_BUCKET;
+
+const stats = [
+  { label: '產品料號', v: counts?.products ?? 0 },
+  { label: '未公開', v: counts?.hidden ?? 0 },
+  { label: '型錄頁', v: counts?.pages ?? 0 },
+  { label: '產品線', v: counts?.categories ?? 0 },
+  { label: '車廠', v: counts?.brands ?? 0 },
+  { label: '消息', v: counts?.news ?? 0 },
+];
+const quick = [
+  { href: '/admin/products/new', label: '新增產品' },
+  { href: '/admin/news/new', label: '發布最新消息' },
+  { href: '/admin/import', label: 'CSV 匯入' },
+  { href: '/admin/media', label: '上傳圖片' },
+];
+---
+<Admin title="儀表板" active="dashboard">
+  <div class="page-h">
+    <div><h1>儀表板</h1><p>YAC 網站內容管理總覽</p></div>
+  </div>
+  <div class="stats">
+    {stats.map((s) => <div class="stat"><small>{s.label}</small><b>{s.v.toLocaleString()}</b></div>)}
+  </div>
+  {!r2 && <div class="flash warn">尚未綁定 R2 Bucket：圖片暫存於 D1（單檔上限 1 MB）；啟用 R2 後自動改存 R2。</div>}
+  <div class="card">
+    <div class="card-h"><h2>快速操作</h2></div>
+    <div class="card-b" style="display:flex;gap:10px;flex-wrap:wrap">
+      {quick.map((q) => <a class="btn ghost" href={q.href}>{q.label}</a>)}
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-h"><h2>最近操作</h2><a href="/admin/audit" class="mono" style="font-size:12px">全部紀錄 →</a></div>
+    <div class="scroll-x">
+      <table class="grid">
+        <thead><tr><th>時間 (UTC)</th><th>帳號</th><th>動作</th><th>對象</th></tr></thead>
+        <tbody>
+          {recent.map((r) => (
+            <tr><td class="mono">{r.created_at}</td><td>{r.actor}</td><td><span class="pill off">{r.action}</span></td><td class="mono">{r.target_table}{r.target_id ? ` #${r.target_id}` : ''}</td></tr>
+          ))}
+          {!recent.length && <tr><td colspan="4" class="empty">尚無操作紀錄</td></tr>}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</Admin>

@@ -1,0 +1,72 @@
+---
+import Admin from '../../../layouts/Admin.astro';
+import ProductEditor from '../../../islands/admin/ProductEditor';
+import { first, getDb } from '../../../lib/db';
+import { pageOptions, refTypeOptions } from '../../../lib/admin-products';
+import { getProductDetail, parseColumns } from '../../../lib/queries';
+import { APP_FIELDS } from '../../../lib/columns';
+
+export const prerender = false;
+
+const db = getDb(Astro.locals);
+const idParam = Astro.params.id ?? '';
+const isNew = idParam === 'new';
+
+let product = null;
+if (!isNew) {
+  const id = Number(idParam);
+  product = Number.isInteger(id) ? await getProductDetail(db, id) : null;
+  if (!product) return new Response('Not found', { status: 404 });
+}
+const wantedPage = isNew ? Number(Astro.url.searchParams.get('page_id')) || 0 : product!.page_id;
+const pageRow = wantedPage ? await first<{ columns_json: string }>(db, 'SELECT columns_json FROM catalog_pages WHERE id = ?', wantedPage) : null;
+
+const initial = product
+  ? {
+      id: product.id,
+      page_id: product.page_id,
+      yac_no: product.yac_no,
+      yac_no_left: product.yac_no_left ?? '',
+      car_series: product.car_series ?? '',
+      notes: product.notes ?? '',
+      primary_image_url: product.primary_image_url ?? '',
+      is_published: !!product.is_published,
+      sort_order: product.sort_order,
+      specs: product.specs,
+      apps: product.apps.map((a) => Object.fromEntries(APP_FIELDS.map((f) => [f, (a as any)[f] ?? '']))),
+      refs: product.refs.map((r) => ({ ref_type: r.ref_type, ref_no: r.ref_no })),
+    }
+  : {
+      id: 0,
+      page_id: wantedPage,
+      yac_no: '',
+      yac_no_left: '',
+      car_series: '',
+      notes: '',
+      primary_image_url: '',
+      is_published: true,
+      sort_order: 0,
+      specs: {},
+      apps: [],
+      refs: [],
+    };
+
+const saved = Astro.url.searchParams.get('saved') === '1';
+const title = isNew ? '新增產品' : `編輯產品 ${product!.yac_no}`;
+const pages = await pageOptions(db);
+---
+<Admin title={title} active="products" crumb={`產品 / ${isNew ? '新增' : product!.yac_no}`}>
+  <div class="page-h">
+    <div><h1>{title}</h1>{!isNew && <p class="mono">products #{idParam}</p>}</div>
+    <a class="btn ghost" href={wantedPage ? `/admin/products?page_id=${wantedPage}` : '/admin/products'}>← 返回列表</a>
+  </div>
+  {saved && <div class="flash ok">已儲存</div>}
+  <ProductEditor
+    client:load
+    initial={initial}
+    isNew={isNew}
+    pages={pages}
+    refTypes={refTypeOptions()}
+    columns={pageRow ? parseColumns(pageRow.columns_json) : []}
+  />
+</Admin>

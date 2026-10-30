@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.astro/
+.wrangler/
+.dev.vars
+.env
+.env.local
+*.log
+migrations/seed/seed.sql
+migrations/seed/*.json
+docs/.tmp/

@@ -1,0 +1,36 @@
+{
+  "name": "yac-website",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "YAC 華佑科技官方網站（Astro 5 + Cloudflare D1 + R2 動態網站與後台 CMS）",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "wrangler pages dev dist",
+    "check": "astro check",
+    "test": "vitest run",
+    "db:migrate:local": "wrangler d1 migrations apply yac-website-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply yac-website-db --remote",
+    "db:import:legacy": "tsx scripts/migrate-legacy-html.ts",
+    "db:seed:local": "npm run db:migrate:local && npm run db:import:legacy && wrangler d1 execute yac-website-db --local --file=migrations/seed/seed.sql",
+    "auth:hash": "tsx scripts/hash-password.ts",
+    "deploy": "npm run build && wrangler pages deploy dist --project-name=yac-website"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "^12.6.13",
+    "@astrojs/preact": "^4.1.3",
+    "astro": "^5.18.2",
+    "preact": "^10.29.8"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "@cloudflare/workers-types": "^5.20261019.1",
+    "@types/node": "^22.20.5",
+    "cheerio": "^1.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.0",
+    "wrangler": "^4.0.0"
+  }
+}
