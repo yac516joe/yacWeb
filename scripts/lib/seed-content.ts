@@ -43,7 +43,7 @@ export const SITE_PAGES: { key: string; title: string; content: unknown }[] = [
           ],
         },
       ],
-      gallery: ['/pics/company-1s.jpg', '/pics/company-2s.jpg', '/pics/company-4s.jpg', '/pics/company-18s.jpg', '/pics/company-19s.jpg', '/pics/company-20s.jpg'],
+      gallery: ['/images/pics/company-1s.jpg', '/images/pics/company-2s.jpg', '/images/pics/company-4s.jpg', '/images/pics/company-18s.jpg', '/images/pics/company-19s.jpg', '/images/pics/company-20s.jpg'],
     },
   },
   {
@@ -74,7 +74,7 @@ export const SITE_PAGES: { key: string; title: string; content: unknown }[] = [
 ];
 
 export const NEWS_SEED = [
-  { slug: 'yac-new-01', title: 'YAC 新產品 NEW 01', cover: '/new-p/yacnew01.jpg' },
-  { slug: 'atv-ad', title: 'ATV-AD 新產品', cover: '/new-p/ATV-AD.jpg' },
-  { slug: 'atv-ad-2', title: 'ATV-AD 新產品（二）', cover: '/new-p/ATV-AD-2.jpg' },
+  { slug: 'yac-new-01', title: 'YAC 新產品 NEW 01', cover: '/images/new-p/yacnew01.jpg' },
+  { slug: 'atv-ad', title: 'ATV-AD 新產品', cover: '/images/new-p/ATV-AD.jpg' },
+  { slug: 'atv-ad-2', title: 'ATV-AD 新產品（二）', cover: '/images/new-p/ATV-AD-2.jpg' },
 ];

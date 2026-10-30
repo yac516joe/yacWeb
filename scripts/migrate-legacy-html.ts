@@ -14,6 +14,9 @@ import { NEWS_SEED, SITE_PAGES } from './lib/seed-content';
 const ROOT = path.resolve(import.meta.dirname, '..');
 // 舊版靜態站（HTML 與圖片）已封存於 legacy/，匯入時只讀取此資料夾
 const LEGACY = path.join(ROOT, 'legacy');
+// 動態網站使用的圖片一律放在 public/images/（網址 /images/...），不再讀取 legacy/
+const IMAGE_PREFIX = '/images';
+const IMAGE_OUT = path.join(ROOT, 'public', 'images');
 
 interface CatConf {
   slug: string;
@@ -130,6 +133,7 @@ const redirects = new Map<string, { to: string; broken: number; note: string }>(
 const warnings: string[] = [];
 const missingImages = new Map<string, Set<string>>();
 const caseFixedImages = new Set<string>();
+const usedImages = new Set<string>();
 const emptyPages: string[] = [];
 const pages: PageRec[] = [];
 const brands = new Map<string, { name: string; id: number }>();
@@ -200,7 +204,8 @@ CATS.forEach((cat) => {
         return null;
       }
       if (hit.caseFixed) caseFixedImages.add(`${rel} → ${hit.path}`);
-      return hit.path;
+      usedImages.add(hit.path);
+      return IMAGE_PREFIX + hit.path;
     };
     const tables = parseHtml(html, { resolveAsset }).filter((t) => t.products.length > 0 || t.stats.dataRows > 0);
     if (!tables.length) {
@@ -360,6 +365,22 @@ NEWS_SEED.forEach((n, i) => {
 SITE_PAGES.forEach((s) => {
   sql.push(`INSERT OR IGNORE INTO site_pages (page_key, title, content_json) VALUES (${[s.key, s.title, JSON.stringify(s.content)].map(sqlVal).join(', ')});`);
 });
+
+// 將實際被引用的圖片複製到 public/images/（保留原相對路徑）；legacy/ 僅作封存
+const seedImgRefs = JSON.stringify([SITE_PAGES, NEWS_SEED]).match(/\/images\/[^"'\s)]+\.(?:jpe?g|png|gif|webp)/gi) ?? [];
+seedImgRefs.forEach((r) => usedImages.add(r.slice(IMAGE_PREFIX.length)));
+let copiedImages = 0;
+for (const rel of usedImages) {
+  const src = path.join(LEGACY, rel);
+  const dst = path.join(IMAGE_OUT, rel);
+  if (!fs.existsSync(src)) continue;
+  if (!fs.existsSync(dst) || fs.statSync(dst).size !== fs.statSync(src).size) {
+    fs.mkdirSync(path.dirname(dst), { recursive: true });
+    fs.copyFileSync(src, dst);
+  }
+  copiedImages++;
+}
+console.log(`images referenced=${usedImages.size} present in public/images=${copiedImages}`);
 
 fs.mkdirSync(path.join(ROOT, 'migrations/seed'), { recursive: true });
 fs.writeFileSync(path.join(ROOT, 'migrations/seed/seed.sql'), sql.join('\n') + '\n', 'utf8');

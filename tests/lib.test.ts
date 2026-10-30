@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createSessionToken, hashPassword, readCookie, verifyPassword, verifySessionToken } from '../src/lib/auth';
-import { legacyKey, isLegacyHtmlPath } from '../src/lib/redirects';
+import { legacyKey, isLegacyHtmlPath, legacyImageRedirect } from '../src/lib/redirects';
 import { sanitizeHtml } from '../src/lib/sanitize';
 import { normalizeRef } from '../src/lib/columns';
 import { searchTokens, type ProductDetail } from '../src/lib/queries';
@@ -42,6 +42,13 @@ describe('legacy redirects', () => {
     expect(legacyKey('/%E4%B8%AD.html')).toBe('/中.html');
     expect(isLegacyHtmlPath('/x/y.HTML')).toBe(true);
     expect(isLegacyHtmlPath('/x/y.jpg')).toBe(false);
+  });
+  it('redirects old image URLs to /images', () => {
+    expect(legacyImageRedirect('/cvj/new/AA-02.jpg')).toBe('/images/cvj/new/AA-02.jpg');
+    expect(legacyImageRedirect('/pics/company-1s.JPG')).toBe('/images/pics/company-1s.JPG');
+    expect(legacyImageRedirect('/images/cvj/a.jpg')).toBeNull();
+    expect(legacyImageRedirect('/media/a.jpg')).toBeNull();
+    expect(legacyImageRedirect('/cvj/toyota.html')).toBeNull();
   });
 });
 

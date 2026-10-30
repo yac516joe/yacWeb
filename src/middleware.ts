@@ -1,6 +1,6 @@
 import { defineMiddleware } from 'astro:middleware';
 import { resolveAdmin } from './lib/auth';
-import { lookupLegacyRedirect, isLegacyHtmlPath } from './lib/redirects';
+import { lookupLegacyRedirect, isLegacyHtmlPath, legacyImageRedirect } from './lib/redirects';
 
 const PUBLIC_ADMIN = new Set(['/admin/login', '/api/admin/login']);
 
@@ -19,6 +19,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const url = new URL(request.url);
   const path = url.pathname;
   const env = locals.runtime?.env;
+
+  const newImage = legacyImageRedirect(path);
+  if (newImage) return Response.redirect(new URL(newImage + url.search, url).toString(), 301);
 
   if (env?.DB && isLegacyHtmlPath(path)) {
     const hit = await lookupLegacyRedirect(env.DB, path);

@@ -44,7 +44,7 @@ export function ImageField({ value, onChange, id }: { value: string; onChange: (
     <div class="img-fld">
       <div class="prev">{value ? <img src={value} alt="" /> : <span>無圖</span>}</div>
       <div class="ctl">
-        <input id={id} type="text" value={value} placeholder="/cvj/new/AA-02.jpg 或上傳新圖" onInput={(e) => onChange((e.target as HTMLInputElement).value)} />
+        <input id={id} type="text" value={value} placeholder="/images/cvj/new/AA-02.jpg 或上傳新圖" onInput={(e) => onChange((e.target as HTMLInputElement).value)} />
         <div class="row">
           <button type="button" class="btn ghost sm" disabled={busy} onClick={() => file.current?.click()}>
             {busy ? '上傳中…' : '上傳圖片'}
