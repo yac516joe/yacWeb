@@ -80,7 +80,7 @@ npm run deploy
 - 樣式：`src/styles/global.css`（前台）、`admin.css`（後台）；設計定案見 `docs/PLAN.md` §3.0（淺色工業藍、零圓角）。
 - 與 PLAN 初稿的差異：以原生 D1 prepared statements + 薄型別層取代 Drizzle；Session 為無狀態簽章 Cookie（8 小時）；詢價採 localStorage 詢價單 + `mailto:`（不另存資料庫）。
 - 後台 CSV：每筆適用車款一列，依 YAC 料號 upsert，不刪除；單次上限 200 個產品（免費方案 subrequest 限制）。
-- `news_posts.content_html` 以 HTML 原樣輸出，僅限已登入管理員編輯。
+- `news_posts.content_html` 輸出前經 `src/lib/sanitize.ts` 白名單過濾（基本排版標籤、安全連結／圖片）。
 
 ---
 
@@ -119,9 +119,9 @@ npm run deploy
 - [x] 型別檢查（`astro check`）0 錯誤；單元測試（`npm test`）通過；`npm run build` 成功。
 
 ### 待辦事項 (Backlog / Next Steps)
-- [ ] **Phase 5：Staging 驗證與正式切換**
+- [ ] **Phase 5：Staging 驗證與正式切換**（步驟見 `docs/DEPLOY.md`；工作流程範本在 `docs/workflows/{ci,deploy}.yml`，因推送權杖無 `workflow` 權限，需有權限者複製到 `.github/workflows/`）
   - [ ] 建立真實 Cloudflare 資源：D1（把 UUID 填入 `wrangler.toml` 的 `database_id`）、R2 bucket `yac-website-media`，並設定 `ADMIN_*` / `SESSION_SECRET` secrets。
   - [ ] 套用遠端 migration，將本機 `migrations/seed/seed.sql`（`npm run db:import:legacy` 產生）匯入遠端 D1，並把 8 個缺圖（見遷移報告）補齊或移除。
   - [ ] 更新 GitHub Actions：安裝依賴 → `npm run build` → `wrangler pages deploy dist`；先部署 Preview 雙軌驗證（舊網址 301、搜尋結果與舊站比對）。
   - [ ] 驗證後切換正式網域；觀察 Search Console 的轉址與 404。舊靜態 `.html` 於穩定後再移除。
-  - [ ] 視需要：詢價單寄信（Email Worker / 第三方）、`news_posts.content_html` 的 HTML 清理、Cloudflare Access 保護 `/admin`。
+  - [ ] 視需要：詢價單寄信（Email Worker / 第三方）、Cloudflare Access 保護 `/admin`。

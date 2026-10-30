@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import { getDb } from '../../lib/db';
 import { getNewsPost } from '../../lib/queries';
+import { sanitizeHtml } from '../../lib/sanitize';
 
 const post = await getNewsPost(getDb(Astro.locals), Astro.params.slug!);
 if (!post) return new Response(null, { status: 404 });
@@ -12,6 +13,6 @@ if (!post) return new Response(null, { status: 404 });
   <div class="prose">
     {post.cover_image_url && <img src={post.cover_image_url} alt={post.title_zh} style="max-width:560px;border:1px solid var(--line);background:#fff" />}
     {post.summary && <p>{post.summary}</p>}
-    <div class="rich" set:html={post.content_html}></div>
+    <div class="rich" set:html={sanitizeHtml(post.content_html)}></div>
   </div>
 </Base>

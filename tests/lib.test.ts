@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createSessionToken, hashPassword, readCookie, verifyPassword, verifySessionToken } from '../src/lib/auth';
 import { legacyKey, isLegacyHtmlPath } from '../src/lib/redirects';
+import { sanitizeHtml } from '../src/lib/sanitize';
 import { normalizeRef } from '../src/lib/columns';
 import { searchTokens, type ProductDetail } from '../src/lib/queries';
 import { parseValues, RESOURCES, validateColumns } from '../src/lib/admin-resources';
@@ -41,6 +42,19 @@ describe('legacy redirects', () => {
     expect(legacyKey('/%E4%B8%AD.html')).toBe('/中.html');
     expect(isLegacyHtmlPath('/x/y.HTML')).toBe(true);
     expect(isLegacyHtmlPath('/x/y.jpg')).toBe(false);
+  });
+});
+
+describe('sanitizeHtml', () => {
+  it('keeps basic markup and strips dangerous content', () => {
+    expect(sanitizeHtml('<p>Hi <strong>there</strong></p>')).toBe('<p>Hi <strong>there</strong></p>');
+    expect(sanitizeHtml('<script>alert(1)</script><p>x</p>')).toBe('<p>x</p>');
+    expect(sanitizeHtml('<a href="javascript:alert(1)" onclick="x()">a</a>')).toBe('<a>a</a>');
+    expect(sanitizeHtml('<a href="https://e.com/?a=1&b=2">a</a>')).toContain('href="https://e.com/?a=1&amp;b=2"');
+    expect(sanitizeHtml('<img src="/x.jpg" onerror="x()">')).toBe('<img src="/x.jpg">');
+    expect(sanitizeHtml('<img src="data:text/html,x">')).toBe('<img>');
+    expect(sanitizeHtml('1 < 2 & 3')).toBe('1 &lt; 2 &amp; 3');
+    expect(sanitizeHtml('<p>open')).toBe('<p>open</p>');
   });
 });
 
