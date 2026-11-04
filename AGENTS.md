@@ -130,7 +130,7 @@ npm run deploy
   - [x] 設定 Production secrets（`ADMIN_PASSWORD_HASH`、`SESSION_SECRET`）；正式站管理員密碼與 Preview 不同，僅存於本機 session 檔，請改存密碼管理員後刪除。
   - [x] 套用遠端 migration 並匯入 seed（products 8679、applications 7759、cross_refs 10840、redirects 547、catalog_pages 395、news 3）。8 個缺圖（見遷移報告）仍待補齊或移除。
   - [x] 已手動部署 Preview：`https://preview.yac-website.pages.dev`（`--branch=preview`；首頁 / 型錄 / 搜尋 / 舊網址 301 / 舊圖片 / 後台登入皆通過）。
-  - [ ] 把 `docs/workflows/*.yml` 複製到 `.github/workflows/`（需 `workflow` 權限），並比對舊站搜尋結果。
+  - [x] 已將 `docs/workflows/*.yml` 複製到 `.github/workflows/`（CI 在 PR 上通過）。部署 workflow 需 GitHub Secrets `CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID` 才能執行（尚未設定）。待辦：比對舊站搜尋結果。
   - [ ] 驗證後切換正式網域；觀察 Search Console 的轉址與 404。舊靜態 `.html` 於穩定後再移除。
   - [x] 詢價單改為存入 D1 並可寄信（Resend）；後台新增「詢價單」頁與主題 B 版面（遠端 D1 已套用 `0004`、Preview 已驗證）。
   - [ ] 啟用寄信：註冊 Resend、驗證 `yac.com.tw` 網域，設定 secrets `RESEND_API_KEY`、`INQUIRY_FROM_EMAIL`（見 `.env.example`）。
