@@ -1,0 +1,23 @@
+---
+import Base from '../layouts/Base.astro';
+import { getDb } from '../lib/db';
+import { getSitePage } from '../lib/queries';
+
+const page = await getSitePage<{ company?: string; address?: string; tel?: string; fax?: string; email?: string; website?: string }>(getDb(Astro.locals), 'contact');
+const c = page?.content ?? {};
+---
+<Base nav="contact" title="聯絡詢價" description="YAC 華佑科技聯絡方式與詢價。">
+  <nav class="crumb"><a href="/">首頁</a> / <b>聯絡詢價</b></nav>
+  <div class="page-h"><h1>{page?.title ?? '聯絡我們'}</h1><p>CONTACT</p></div>
+  <div class="contact-grid">
+    {c.company && <div><small>COMPANY</small><b>{c.company}</b></div>}
+    {c.address && <div><small>ADDRESS</small><b>{c.address}</b></div>}
+    {c.tel && <div><small>TEL</small><b>{c.tel}</b></div>}
+    {c.fax && <div><small>FAX</small><b>{c.fax}</b></div>}
+    {c.email && <div><small>E-MAIL</small><b><a href={`mailto:${c.email}`} style="color:var(--yac)">{c.email}</a></b></div>}
+  </div>
+  <div class="cta" style="padding:24px var(--pad) 0">
+    <a class="btn" href="/inquiry">填寫詢價單 <span class="arr">→</span></a>
+    <a class="btn ghost" href="/catalog">瀏覽型錄</a>
+  </div>
+</Base>

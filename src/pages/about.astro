@@ -1,0 +1,24 @@
+---
+import Base from '../layouts/Base.astro';
+import { getDb } from '../lib/db';
+import { getSitePage } from '../lib/queries';
+
+interface Section { title: string; body?: string[]; list?: string[] }
+const page = await getSitePage<{ lead?: string; sections?: Section[]; gallery?: string[] }>(getDb(Astro.locals), 'about');
+const c = page?.content ?? {};
+---
+<Base nav="about" title="關於 YAC" description={c.lead}>
+  <nav class="crumb"><a href="/">首頁</a> / <b>關於 YAC</b></nav>
+  <div class="page-h"><h1>{page?.title ?? '關於 YAC'}</h1><p>ABOUT US</p></div>
+  <div class="prose">
+    {c.lead && <p style="font-size:18px;font-weight:500;color:var(--ink)">{c.lead}</p>}
+    {(c.sections ?? []).map((s) => (
+      <>
+        <h2>{s.title}</h2>
+        {s.list && <ul>{s.list.map((li) => <li>{li}</li>)}</ul>}
+        {(s.body ?? []).map((p) => <p>{p}</p>)}
+      </>
+    ))}
+  </div>
+  {c.gallery && c.gallery.length > 0 && <div class="gallery" style="padding:0 var(--pad)">{c.gallery.map((g) => <img src={g} alt="YAC 公司" loading="lazy" />)}</div>}
+</Base>

@@ -1,0 +1,14 @@
+---
+import Admin from '../../layouts/Admin.astro';
+import CsvImport from '../../islands/admin/CsvImport';
+import { getDb } from '../../lib/db';
+import { pageOptions } from '../../lib/admin-products';
+
+export const prerender = false;
+const pages = await pageOptions(getDb(Astro.locals));
+const initialPage = Number(Astro.url.searchParams.get('page_id')) || 0;
+---
+<Admin title="CSV 匯入匯出" active="import">
+  <div class="page-h"><div><h1>CSV 匯入匯出</h1><p>以 CSV 批次新增或更新單一型錄頁的產品</p></div></div>
+  <CsvImport client:load pages={pages} initialPage={initialPage} />
+</Admin>

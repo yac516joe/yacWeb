@@ -1,0 +1,15 @@
+---
+import Admin from '../../layouts/Admin.astro';
+import MediaLibrary from '../../islands/admin/MediaLibrary';
+import { all, getDb, getEnv } from '../../lib/db';
+
+export const prerender = false;
+const db = getDb(Astro.locals);
+const items = await all(db, 'SELECT id, public_url, file_name, mime_type, file_size, created_at FROM media_assets ORDER BY id DESC LIMIT 200');
+const hasR2 = !!getEnv(Astro.locals).MEDIA_BUCKET;
+---
+<Admin title="圖片庫" active="media">
+  <div class="page-h"><div><h1>圖片庫</h1><p>新上傳的圖片存放於 {hasR2 ? 'Cloudflare R2' : 'D1 資料庫（單檔上限 1 MB）'}；舊產品圖片仍沿用原本路徑</p></div></div>
+  {!hasR2 && <div class="flash warn">尚未綁定 R2 Bucket：目前以 D1 備援儲存圖片，單檔上限 1 MB；啟用 R2 後即自動改存 R2。</div>}
+  <MediaLibrary client:load items={items as any} enabled={true} />
+</Admin>

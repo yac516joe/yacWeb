@@ -1,0 +1,61 @@
+---
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+  nav?: string;
+  noindex?: boolean;
+}
+const { title, description = 'YAC 華佑科技：等速接頭、傳動軸、轉向機、輪轂等 11 大產品線線上型錄，可依 YAC / OEM 料號或車型查詢。', nav = '', noindex = false } = Astro.props;
+const fullTitle = title ? `${title} | YAC 華佑科技` : 'YAC 華佑科技 — 傳動與底盤零件型錄';
+---
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site ?? Astro.url).href} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+  </head>
+  <body>
+    <Header active={nav} />
+    <main id="main"><slot /></main>
+    <Footer />
+    <script is:inline>
+      (function () {
+        var KEY = 'yac_inquiry';
+        function read() { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { return []; } }
+        function paint() {
+          var n = read().length;
+          document.querySelectorAll('[data-inq-count]').forEach(function (el) { el.textContent = n ? String(n) : ''; el.dataset.n = String(n); });
+        }
+        window.yacInquiry = {
+          read: read,
+          add: function (item) {
+            var list = read();
+            if (!list.some(function (x) { return x.id === item.id; })) list.push(item);
+            localStorage.setItem(KEY, JSON.stringify(list));
+            paint();
+          },
+          remove: function (id) {
+            localStorage.setItem(KEY, JSON.stringify(read().filter(function (x) { return x.id !== id; })));
+            paint();
+          },
+          clear: function () { localStorage.removeItem(KEY); paint(); }
+        };
+        paint();
+        var t = document.querySelector('.nav-toggle');
+        if (t) t.addEventListener('click', function () { document.querySelector('.main-nav').classList.toggle('open'); });
+      })();
+    </script>
+  </body>
+</html>

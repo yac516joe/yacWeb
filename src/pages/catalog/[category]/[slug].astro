@@ -1,0 +1,187 @@
+---
+import Base from '../../../layouts/Base.astro';
+import { getDb } from '../../../lib/db';
+import { getCategory, getCategoryPages, getPage, getPageProducts, parseColumns } from '../../../lib/queries';
+import { headerZh, legendZh, REF_LABELS } from '../../../lib/columns';
+import { expandProduct } from '../../../lib/table';
+
+const db = getDb(Astro.locals);
+const category = await getCategory(db, Astro.params.category!);
+if (!category) return new Response(null, { status: 404 });
+const page = await getPage(db, category.id, Astro.params.slug!);
+if (!page) return new Response(null, { status: 404 });
+
+const [siblings, products] = await Promise.all([getCategoryPages(db, category.id), getPageProducts(db, page.id)]);
+const columns = parseColumns(page.columns_json);
+const specCols = columns.filter((c) => c.source.startsWith('spec.') && c.short);
+const letters = [...new Set(siblings.map((s) => (s.title.trim()[0] ?? '').toUpperCase()).filter((l) => /[A-Z]/.test(l)))].sort();
+
+const inspectorData = products.map((p) => ({
+  id: p.id,
+  yac: p.yac_no,
+  left: p.yac_no_left,
+  img: p.primary_image_url,
+  series: p.car_series || p.apps[0]?.car_model || '',
+  specs: specCols.map((c) => [c.short, p.specs[c.key.replace(/^spec\./, '')] ?? p.specs[c.source.slice(5)] ?? '']).filter(([, v]) => v),
+  refs: p.refs.map((r) => `${REF_LABELS[r.ref_type] ?? r.ref_type}: ${r.ref_no}`),
+  apps: p.apps.length,
+}));
+const refTypes = [...new Set(products.flatMap((p) => p.refs.map((r) => r.ref_type)))];
+const title = `${page.title} ${category.name_zh}`;
+---
+<Base nav="catalog" title={title} description={`${category.name_zh} ${page.title} 規格表：${products.length} 個型號，含適用車款與 OEM 對照料號。`}>
+  <nav class="crumb"><a href="/">首頁</a> / <a href="/catalog">產品型錄</a> / <a href={`/catalog/${category.slug}`}>{category.name_zh}</a> / <b>{page.title}</b></nav>
+  <div class="cat-head">
+    <div><h1>{page.title}{page.hand ? ` · ${page.hand}` : ''}</h1><p>{category.name_en.toUpperCase()} · {products.length} 個型號</p></div>
+    <a class="btn ghost" href={`/api/csv?page=${page.id}`} download>下載 CSV <span class="arr">↓</span></a>
+  </div>
+
+  <div class="cat-grid">
+    <aside class="side">
+      <h5>搜尋此頁</h5>
+      <div class="srch"><input id="filter" type="search" placeholder="料號 / 車型…" autocomplete="off" aria-label="搜尋此頁" /></div>
+      <h5>{category.name_zh}</h5>
+      {letters.length > 1 && (
+        <div class="az" style="margin-bottom:14px" id="az">
+          <button type="button" data-l="*" class="on">全部</button>
+          {letters.map((l) => <button type="button" data-l={l}>{l}</button>)}
+        </div>
+      )}
+      <ul id="sib">
+        {siblings.map((s) => (
+          <li class={s.id === page.id ? 'on' : ''} data-l={(s.title.trim()[0] ?? '').toUpperCase()}>
+            <a href={`/catalog/${category.slug}/${s.slug}`}>{s.title}<span>{s.product_count}</span></a>
+          </li>
+        ))}
+      </ul>
+    </aside>
+
+    <section class="main">
+      <div class="tabs" role="tablist">
+        <button type="button" class="on" data-tab="spec" role="tab">規格表</button>
+        <button type="button" data-tab="photo" role="tab">圖片</button>
+        {refTypes.length > 0 && <button type="button" data-tab="ref" role="tab">OEM 對照</button>}
+        <span class="sp"></span><span class="cnt" id="cnt">{products.length} 筆</span>
+      </div>
+      {specCols.length > 0 && (
+        <div class="legend">{specCols.map((c) => <div><b>{c.short}</b>{legendZh(c)}</div>)}</div>
+      )}
+
+      <div id="tab-spec" class="table-wrap">
+        {products.length === 0 ? <p class="empty">此頁尚無資料</p> : (
+          <table class="spec">
+            <thead><tr>{columns.map((c) => <th>{headerZh(c)}</th>)}</tr></thead>
+            {products.map((p) => (
+              <tbody class="prod" data-p={p.id} data-text={[p.yac_no, p.yac_no_left, p.car_series, ...p.apps.map((a) => `${a.car_model} ${a.engine}`), ...p.refs.map((r) => r.ref_no)].filter(Boolean).join(' ').toLowerCase()}>
+                {expandProduct(p, columns).map((row) => (
+                  <tr>
+                    {row.map((cell) => (
+                      <td rowspan={cell.rowspan > 1 ? cell.rowspan : undefined} class={cell.kind === 'text' && /^(spec|ref)\./.test(cell.col.source) ? 'm' : ''}>
+                        {cell.kind === 'yac' && <span class="pn">{cell.value}{cell.left && <small>{cell.left}</small>}</span>}
+                        {cell.kind === 'photo' && cell.value && <img class="thumb-s" src={cell.value} alt={p.yac_no} loading="lazy" onerror="this.style.display='none'" />}
+                        {cell.kind === 'text' && cell.value}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            ))}
+          </table>
+        )}
+      </div>
+
+      <div id="tab-photo" hidden>
+        <div class="gallery" style="padding:20px">
+          {products.filter((p) => p.primary_image_url).map((p) => (
+            <figure data-p={p.id} class="pic" style="cursor:pointer">
+              <img src={p.primary_image_url!} alt={p.yac_no} loading="lazy" onerror="this.parentElement.style.display='none'" />
+              <figcaption class="pn" style="text-align:center;padding:6px 0">{p.yac_no}</figcaption>
+            </figure>
+          ))}
+        </div>
+      </div>
+
+      {refTypes.length > 0 && (
+        <div id="tab-ref" class="table-wrap" hidden>
+          <table class="spec">
+            <thead><tr><th>YAC 料號</th>{refTypes.map((t) => <th>{REF_LABELS[t] ?? t}</th>)}</tr></thead>
+            <tbody>
+              {products.filter((p) => p.refs.length).map((p) => (
+                <tr>
+                  <td><span class="pn">{p.yac_no}</span></td>
+                  {refTypes.map((t) => <td class="m">{p.refs.filter((r) => r.ref_type === t).map((r) => r.ref_no).join(' / ')}</td>)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+
+    <aside class="insp" id="insp" aria-live="polite">
+      <div class="ph"><span>PART</span><img id="i-img" alt="" /></div>
+      <h3 id="i-no">選擇料號</h3>
+      <div class="sub" id="i-sub">點選表格中的任一料號，檢視規格與對照資料</div>
+      <div class="kv" id="i-kv"></div>
+      <div id="i-refs" style="margin-top:14px"></div>
+      <button class="btn" type="button" id="i-add" hidden>加入詢價單 <span class="arr">＋</span></button>
+    </aside>
+  </div>
+
+  <script is:inline define:vars={{ DATA: inspectorData }}>
+    (function () {
+      var byId = {};
+      DATA.forEach(function (d) { byId[d.id] = d; });
+      var $ = function (s) { return document.querySelector(s); };
+      var cur = null;
+      function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+      function select(id) {
+        var d = byId[id]; if (!d) return;
+        cur = d;
+        document.querySelectorAll('tbody.prod.sel').forEach(function (t) { t.classList.remove('sel'); });
+        var tb = document.querySelector('tbody.prod[data-p="' + id + '"]'); if (tb) tb.classList.add('sel');
+        $('#i-no').textContent = d.yac + (d.left ? ' / ' + d.left : '');
+        $('#i-sub').textContent = d.series || (d.apps ? d.apps + ' 款適用車型' : '');
+        var img = $('#i-img'); if (d.img) { img.src = d.img; img.style.display = ''; } else { img.style.display = 'none'; }
+        $('#i-kv').innerHTML = d.specs.map(function (s) { return '<div>' + esc(s[0]) + '<b>' + esc(s[1]) + '</b></div>'; }).join('');
+        $('#i-refs').innerHTML = d.refs.map(function (r) { return '<span class="pill">' + esc(r) + '</span>'; }).join('');
+        var b = $('#i-add'); b.hidden = false; b.classList.remove('added');
+        var inq = window.yacInquiry.read().some(function (x) { return x.id === d.id; });
+        b.firstChild.textContent = inq ? '已在詢價單 ' : '加入詢價單 ';
+        if (inq) b.classList.add('added');
+      }
+      document.addEventListener('click', function (e) {
+        var el = e.target.closest('[data-p]'); if (el) select(Number(el.dataset.p));
+      });
+      $('#i-add').addEventListener('click', function () {
+        if (!cur) return;
+        window.yacInquiry.add({ id: cur.id, yac: cur.yac, series: cur.series, url: location.pathname });
+        this.classList.add('added'); this.firstChild.textContent = '已在詢價單 ';
+      });
+      document.querySelectorAll('.tabs [data-tab]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          document.querySelectorAll('.tabs [data-tab]').forEach(function (x) { x.classList.toggle('on', x === b); });
+          ['spec', 'photo', 'ref'].forEach(function (t) { var p = $('#tab-' + t); if (p) p.hidden = t !== b.dataset.tab; });
+        });
+      });
+      var f = $('#filter');
+      f.addEventListener('input', function () {
+        var q = f.value.trim().toLowerCase(), n = 0, total = 0;
+        document.querySelectorAll('tbody.prod').forEach(function (t) { total++; var show = !q || t.dataset.text.indexOf(q) >= 0; t.hidden = !show; if (show) n++; });
+        $('#cnt').textContent = (q ? n + ' / ' + total : total) + ' 筆';
+      });
+      var az = $('#az');
+      if (az) az.addEventListener('click', function (e) {
+        var b = e.target.closest('button'); if (!b) return;
+        az.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+        document.querySelectorAll('#sib li').forEach(function (li) { li.hidden = b.dataset.l !== '*' && li.dataset.l !== b.dataset.l; });
+      });
+      var wanted = Number(new URLSearchParams(location.search).get('p'));
+      if (wanted && byId[wanted]) {
+        select(wanted);
+        var el = document.querySelector('tbody.prod[data-p="' + wanted + '"]');
+        if (el) el.scrollIntoView({ block: 'center' });
+      } else if (DATA.length) select(DATA[0].id);
+    })();
+  </script>
+</Base>

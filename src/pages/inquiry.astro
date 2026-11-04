@@ -1,0 +1,9 @@
+---
+import Base from '../layouts/Base.astro';
+import Inquiry from '../islands/Inquiry';
+---
+<Base nav="contact" title="詢價單" noindex>
+  <nav class="crumb"><a href="/">首頁</a> / <b>詢價單</b></nav>
+  <div class="cat-head"><div><h1>詢價單</h1><p>INQUIRY LIST</p></div></div>
+  <Inquiry client:load />
+</Base>

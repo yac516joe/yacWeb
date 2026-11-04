@@ -1,0 +1,22 @@
+name = "yac-website"
+pages_build_output_dir = "./dist"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# 非機密變數（使用 wrangler.toml 時 Pages 不讀取 Dashboard 的明文變數）。
+# ADMIN_PASSWORD_HASH / SESSION_SECRET 為機密，請用 `wrangler pages secret put` 或 Dashboard Secret 設定。
+[vars]
+ADMIN_AUTH_MODE = "session"
+ADMIN_USERNAME = "admin"
+
+# D1 database_id 不是機密，可提交。
+[[d1_databases]]
+binding = "DB"
+database_name = "yac-website-db"
+database_id = "c5ad53fd-800f-4db8-a584-396f6573e0d5"
+migrations_dir = "migrations"
+
+# R2 bucket 已建立；未綁定時圖片改存 D1（media_blobs，單檔 1 MB）。
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "yac-website-media"

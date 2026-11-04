@@ -1,0 +1,20 @@
+---
+import Base from '../../../layouts/Base.astro';
+import { getDb } from '../../../lib/db';
+import { getCategory, getCategoryPages } from '../../../lib/queries';
+
+const db = getDb(Astro.locals);
+const category = await getCategory(db, Astro.params.category!);
+if (!category) return new Response(null, { status: 404 });
+const pages = await getCategoryPages(db, category.id);
+if (pages.length === 1) return Astro.redirect(`/catalog/${category.slug}/${pages[0].slug}`, 302);
+---
+<Base nav="catalog" title={category.name_zh} description={`${category.name_zh}（${category.name_en}）型錄：${pages.length} 個車廠 / 系列規格表。`}>
+  <nav class="crumb"><a href="/">首頁</a> / <a href="/catalog">產品型錄</a> / <b>{category.name_zh}</b></nav>
+  <div class="cat-head"><div><h1>{category.name_zh}</h1><p>{category.name_en.toUpperCase()} · {pages.length} 個系列 · {category.product_count} 型號</p></div></div>
+  {category.summary && <p class="prose" style="padding-bottom:12px">{category.summary}</p>}
+  <div class="cat-tiles">
+    {pages.map((p) => <a href={`/catalog/${category.slug}/${p.slug}`}><span style="font-family:var(--sans);color:var(--ink);font-size:14px">{p.title}</span><span>{p.product_count}</span></a>)}
+    {pages.length === 0 && <p class="empty">此產品線尚無資料</p>}
+  </div>
+</Base>

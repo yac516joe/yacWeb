@@ -1,0 +1,83 @@
+---
+import Admin from '../../layouts/Admin.astro';
+import { all, first, getDb } from '../../lib/db';
+
+export const prerender = false;
+
+interface Row {
+  id: number; name: string; company: string | null; email: string; tel: string | null; note: string | null;
+  items_json: string; email_status: string; email_error: string | null; is_handled: number; created_at: string;
+}
+
+const PAGE = 30;
+const db = getDb(Astro.locals);
+const status = Astro.url.searchParams.get('status') ?? '';
+const want = Math.max(1, Number(Astro.url.searchParams.get('page') ?? 1) || 1);
+const w = status === 'open' ? 'WHERE is_handled = 0' : status === 'done' ? 'WHERE is_handled = 1' : '';
+const total = (await first<{ n: number }>(db, `SELECT COUNT(*) AS n FROM inquiries ${w}`))?.n ?? 0;
+const pages = Math.max(1, Math.ceil(total / PAGE));
+const page = Math.min(want, pages);
+const rows = await all<Row>(db, `SELECT * FROM inquiries ${w} ORDER BY id DESC LIMIT ${PAGE} OFFSET ${(page - 1) * PAGE}`);
+const qs = (p: number) => `?${status ? `status=${status}&` : ''}page=${p}`;
+const mailLabel: Record<string, string> = { sent: '已寄出', failed: '寄信失敗', skipped: '未設定寄信', pending: '處理中' };
+const items = (r: Row): { yac: string; series?: string }[] => {
+  try { return JSON.parse(r.items_json); } catch { return []; }
+};
+---
+<Admin title="詢價單" active="inquiries">
+  <div class="page-h"><div><h1>詢價單</h1><p>前台送出的詢價都會存在這裡，即使寄信失敗也不會遺失</p></div></div>
+  <div class="card">
+    <form class="toolbar" method="get">
+      <select name="status">
+        <option value="">全部</option>
+        <option value="open" selected={status === 'open'}>未處理</option>
+        <option value="done" selected={status === 'done'}>已處理</option>
+      </select>
+      <button class="btn ghost" type="submit">篩選</button>
+    </form>
+    <div class="scroll-x">
+      <table class="grid">
+        <thead><tr><th>時間 (UTC)</th><th>客戶</th><th>詢價料號</th><th>備註</th><th>寄信</th><th>狀態</th><th></th></tr></thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr data-id={r.id}>
+              <td class="mono">{r.created_at}</td>
+              <td>
+                <b>{r.name}</b>{r.company && <><br />{r.company}</>}<br />
+                <a href={`mailto:${r.email}`}>{r.email}</a>{r.tel && <><br /><span class="mono">{r.tel}</span></>}
+              </td>
+              <td class="mono">{items(r).map((i) => <div>{i.yac}{i.series ? ` (${i.series})` : ''}</div>)}</td>
+              <td style="max-width:240px;white-space:pre-wrap">{r.note}</td>
+              <td><span class={`pill ${r.email_status === 'sent' ? 'on' : 'off'}`} title={r.email_error ?? ''}>{mailLabel[r.email_status] ?? r.email_status}</span></td>
+              <td><span class={`pill ${r.is_handled ? 'on' : 'off'}`}>{r.is_handled ? '已處理' : '未處理'}</span></td>
+              <td class="act">
+                <button class="btn ghost sm" type="button" data-act="toggle" data-handled={r.is_handled ? '0' : '1'}>{r.is_handled ? '標為未處理' : '標為已處理'}</button>
+                <button class="btn danger sm" type="button" data-act="delete">刪除</button>
+              </td>
+            </tr>
+          ))}
+          {!rows.length && <tr><td colspan="7" class="empty">目前沒有詢價</td></tr>}
+        </tbody>
+      </table>
+    </div>
+    <div class="pager">
+      <span>共 {total.toLocaleString()} 筆 · 第 {page}/{pages} 頁</span>
+      <span><a class={page <= 1 ? 'dis' : ''} href={qs(page - 1)}>上一頁</a><a class={page >= pages ? 'dis' : ''} href={qs(page + 1)}>下一頁</a></span>
+    </div>
+  </div>
+  <script is:inline>
+    document.addEventListener('click', async function (e) {
+      var b = e.target.closest('button[data-act]');
+      if (!b) return;
+      var tr = b.closest('tr'), id = tr.getAttribute('data-id');
+      var res;
+      if (b.dataset.act === 'delete') {
+        if (!confirm('確定刪除這筆詢價？此動作無法復原。')) return;
+        res = await fetch('/api/admin/inquiries/' + id, { method: 'DELETE' });
+      } else {
+        res = await fetch('/api/admin/inquiries/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ handled: b.dataset.handled === '1' }) });
+      }
+      if (res.ok) location.reload(); else alert('操作失敗，請重新整理後再試');
+    });
+  </script>
+</Admin>
