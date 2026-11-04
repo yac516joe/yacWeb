@@ -124,7 +124,7 @@ npm run deploy
   - [x] 建立遠端 D1 `yac-website-db`（UUID 已寫入 `wrangler.toml`），已設定 Preview 環境的 `ADMIN_PASSWORD_HASH` / `SESSION_SECRET` secrets。
   - [x] R2 已啟用、bucket `yac-website-media` 已建立並綁定（`wrangler.toml`）；未綁定 R2 時圖片改存 D1 `media_blobs`（migration `0002`，單檔 1 MB）。
   - [x] 驗證圖片上傳 → 讀取 → 刪除完整流程（Preview，R2；D1 額度重置後已通過）。遠端 D1 已套用 `0003_images_to_public_images.sql`（products 6978 筆為 `/images/...`，舊路徑 0 筆）。
-  - [ ] 設定 Production secrets（`ADMIN_PASSWORD_HASH`、`SESSION_SECRET`）。
+  - [x] 設定 Production secrets（`ADMIN_PASSWORD_HASH`、`SESSION_SECRET`）；正式站管理員密碼與 Preview 不同，僅存於本機 session 檔，請改存密碼管理員後刪除。
   - [x] 套用遠端 migration 並匯入 seed（products 8679、applications 7759、cross_refs 10840、redirects 547、catalog_pages 395、news 3）。8 個缺圖（見遷移報告）仍待補齊或移除。
   - [x] 已手動部署 Preview：`https://preview.yac-website.pages.dev`（`--branch=preview`；首頁 / 型錄 / 搜尋 / 舊網址 301 / 舊圖片 / 後台登入皆通過）。
   - [ ] 把 `docs/workflows/*.yml` 複製到 `.github/workflows/`（需 `workflow` 權限），並比對舊站搜尋結果。
