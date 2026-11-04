@@ -13,6 +13,9 @@ interface Env {
   CF_ACCESS_TEAM_DOMAIN?: string;
   CF_ACCESS_AUD?: string;
   PUBLIC_MEDIA_BASE_URL?: string;
+  RESEND_API_KEY?: string;
+  INQUIRY_FROM_EMAIL?: string;
+  INQUIRY_TO_EMAIL?: string;
 }
 
 declare namespace App {

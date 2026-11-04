@@ -13,7 +13,8 @@ const counts = await first<Record<string, number>>(
           (SELECT COUNT(*) FROM categories) AS categories,
           (SELECT COUNT(*) FROM brands) AS brands,
           (SELECT COUNT(*) FROM news_posts) AS news,
-          (SELECT COUNT(*) FROM media_assets) AS media`,
+          (SELECT COUNT(*) FROM media_assets) AS media,
+          (SELECT COUNT(*) FROM inquiries WHERE is_handled = 0) AS inquiries`,
 );
 const recent = await all<{ id: number; actor: string; action: string; target_table: string; target_id: string | null; created_at: string }>(
   db,
@@ -22,6 +23,7 @@ const recent = await all<{ id: number; actor: string; action: string; target_tab
 const r2 = !!getEnv(Astro.locals).MEDIA_BUCKET;
 
 const stats = [
+  { label: '未處理詢價', v: counts?.inquiries ?? 0 },
   { label: '產品料號', v: counts?.products ?? 0 },
   { label: '未公開', v: counts?.hidden ?? 0 },
   { label: '型錄頁', v: counts?.pages ?? 0 },

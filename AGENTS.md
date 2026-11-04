@@ -79,7 +79,7 @@ npm run deploy
 - **核心抽象 `catalog_pages`**：一列＝舊站一張規格表；`columns_json` 定義欄位順序，每欄的 `source` 為 `yac | yac_left | photo | remark | app.<欄> | ref.<類型> | spec.<鍵>`。產品規格存於 `products.specs_json`（鍵為小寫），車款與 OEM / 對照號另存子表。新增型錄頁＝新增一列＋定義欄位，無需改程式。
 - `src/islands/`：Preact islands（`Inquiry`；`admin/*` 的表單、產品編輯器、圖片庫、CSV 匯入）。
 - 樣式：`src/styles/global.css`（前台）、`admin.css`（後台）；設計定案見 `docs/PLAN.md` §3.0（淺色工業藍、零圓角）。
-- 與 PLAN 初稿的差異：以原生 D1 prepared statements + 薄型別層取代 Drizzle；Session 為無狀態簽章 Cookie（8 小時）；詢價採 localStorage 詢價單 + `mailto:`（不另存資料庫）。
+- 與 PLAN 初稿的差異：以原生 D1 prepared statements + 薄型別層取代 Drizzle；Session 為無狀態簽章 Cookie（8 小時）；詢價採 localStorage 詢價單，送出時 `POST /api/inquiry` 存入 D1 `inquiries`（migration `0004`；蜜罐＋每 IP 每小時 5 筆限流），再以 Resend 寄信至 `INQUIRY_TO_EMAIL`（預設 `yac106@yac.com.tw`，Reply-To 為客戶）；未設定 `RESEND_API_KEY` 時只存庫，後台「詢價單」可查看 / 標記處理 / 刪除。後台提供兩種版面（A：shadcn 風、B：Flowbite 企業藍白 ERP 風），頂欄「切換版面」按鈕切換並記在瀏覽器 localStorage。
 - 後台 CSV：每筆適用車款一列，依 YAC 料號 upsert，不刪除；單次上限 200 個產品（免費方案 subrequest 限制）。
 - `news_posts.content_html` 輸出前經 `src/lib/sanitize.ts` 白名單過濾（基本排版標籤、安全連結／圖片）。
 
@@ -102,6 +102,9 @@ npm run deploy
 | `SESSION_SECRET` | 是 | 用於簽署後台 HttpOnly Session Cookie 之至少 32 字元隨機金鑰 |
 | `CF_ACCESS_TEAM_DOMAIN` | 選填 | 若啟用 Cloudflare Access，填寫 Team Domain（如 `https://yac.cloudflareaccess.com`） |
 | `CF_ACCESS_AUD` | 選填 | 若啟用 Cloudflare Access，填寫 Application Audience (AUD) Tag |
+| `RESEND_API_KEY` | 選填 | Resend API Key；未設定時詢價只存資料庫、不寄信 |
+| `INQUIRY_FROM_EMAIL` | 選填 | 詢價通知信寄件人（須為 Resend 已驗證網域），與 `RESEND_API_KEY` 同時設定才會寄信 |
+| `INQUIRY_TO_EMAIL` | 選填 | 詢價通知收件人，預設 `yac106@yac.com.tw` |
 
 ---
 
@@ -129,4 +132,6 @@ npm run deploy
   - [x] 已手動部署 Preview：`https://preview.yac-website.pages.dev`（`--branch=preview`；首頁 / 型錄 / 搜尋 / 舊網址 301 / 舊圖片 / 後台登入皆通過）。
   - [ ] 把 `docs/workflows/*.yml` 複製到 `.github/workflows/`（需 `workflow` 權限），並比對舊站搜尋結果。
   - [ ] 驗證後切換正式網域；觀察 Search Console 的轉址與 404。舊靜態 `.html` 於穩定後再移除。
-  - [ ] 視需要：詢價單寄信（Email Worker / 第三方）、Cloudflare Access 保護 `/admin`。
+  - [x] 詢價單改為存入 D1 並可寄信（Resend）；後台新增「詢價單」頁與主題 B 版面（遠端 D1 已套用 `0004`、Preview 已驗證）。
+  - [ ] 啟用寄信：註冊 Resend、驗證 `yac.com.tw` 網域，設定 secrets `RESEND_API_KEY`、`INQUIRY_FROM_EMAIL`（見 `.env.example`）。
+  - [ ] 視需要：Cloudflare Access 保護 `/admin`。

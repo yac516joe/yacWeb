@@ -11,7 +11,9 @@ const TO = 'yac106@yac.com.tw';
 
 export default function Inquiry() {
   const [items, setItems] = useState<Item[]>([]);
-  const [form, setForm] = useState({ name: '', company: '', email: '', tel: '', note: '' });
+  const [form, setForm] = useState({ name: '', company: '', email: '', tel: '', note: '', website: '' });
+  const [state, setState] = useState<'idle' | 'sending' | 'done' | 'error'>('idle');
+  const [msg, setMsg] = useState('');
 
   useEffect(() => setItems(window.yacInquiry.read()), []);
   const set = (k: keyof typeof form) => (e: Event) => setForm({ ...form, [k]: (e.target as HTMLInputElement).value });
@@ -33,11 +35,41 @@ export default function Inquiry() {
       form.note ? `備註：${form.note}` : '',
     ].join('\n');
 
-  const send = (e: Event) => {
+  const mailto = () => `mailto:${TO}?subject=${encodeURIComponent('YAC 產品詢價')}&body=${encodeURIComponent(body())}`;
+
+  const send = async (e: Event) => {
     e.preventDefault();
-    const href = `mailto:${TO}?subject=${encodeURIComponent('YAC 產品詢價')}&body=${encodeURIComponent(body())}`;
-    window.location.href = href;
+    setState('sending');
+    try {
+      const res = await fetch('/api/inquiry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, items: items.map((i) => ({ yac: i.yac, series: i.series })) }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        setState('error');
+        setMsg(data.error ?? '送出失敗，請稍後再試。');
+        return;
+      }
+      window.yacInquiry.clear();
+      setItems([]);
+      setState('done');
+    } catch {
+      setState('error');
+      setMsg('網路連線失敗，您也可以改用 Email 軟體寄送。');
+    }
   };
+
+  if (state === 'done') {
+    return (
+      <section class="panel">
+        <h2>詢價已送出</h2>
+        <p class="empty">感謝您的詢價，我們會盡快以 Email 或電話與您聯絡（{TO}）。</p>
+        <p style="padding:0 20px 20px"><a class="btn" href="/catalog">繼續瀏覽產品型錄</a></p>
+      </section>
+    );
+  }
 
   return (
     <div class="inq">
@@ -65,10 +97,18 @@ export default function Inquiry() {
         <div class="field"><label for="e">Email</label><input id="e" type="email" required value={form.email} onInput={set('email')} /></div>
         <div class="field"><label for="t">電話</label><input id="t" value={form.tel} onInput={set('tel')} /></div>
         <div class="field"><label for="m">備註</label><textarea id="m" value={form.note} onInput={set('note')} /></div>
-        <button class="btn" type="submit" disabled={items.length === 0} style="width:100%;justify-content:space-between">
-          以 Email 送出詢價 <span class="arr">→</span>
+        <div style="position:absolute;left:-9999px" aria-hidden="true">
+          <label for="w">網站</label><input id="w" tabIndex={-1} autoComplete="off" value={form.website} onInput={set('website')} />
+        </div>
+        {state === 'error' && (
+          <p style="color:#a52a22;font-size:13px;margin-bottom:10px">
+            {msg} <a href={mailto()} style="color:var(--yac)">改用 Email 軟體寄送</a>
+          </p>
+        )}
+        <button class="btn" type="submit" disabled={items.length === 0 || state === 'sending'} style="width:100%;justify-content:space-between">
+          {state === 'sending' ? '送出中…' : '送出詢價'} <span class="arr">→</span>
         </button>
-        <p class="mono" style="font-size:11px;color:var(--mute);margin-top:10px">將開啟您的郵件軟體，寄至 {TO}</p>
+        <p class="mono" style="font-size:11px;color:var(--mute);margin-top:10px">詢價內容將送至 {TO}</p>
       </form>
     </div>
   );

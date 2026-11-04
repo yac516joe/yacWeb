@@ -168,3 +168,75 @@ pre.diff { font: 11.5px var(--mono); white-space: pre-wrap; word-break: break-al
   table.grid th, table.grid td { padding: 8px 10px; }
   .scroll-x { overflow-x: auto; }
 }
+
+/* ---- 版面切換按鈕與主題 B 專用元素 ---- */
+.theme-btn { background: none; border: 1px solid var(--line); padding: 4px 10px; font: 12px var(--mono); color: var(--mute); }
+.theme-btn:hover { color: var(--yac); border-color: var(--yac); }
+.top-brand { display: none; }
+
+/* ============================================================
+   後台主題 B：經典企業藍白 ERP 後台（Flowbite 風格）
+   固定頂部導覽列 + 淺灰側欄 + 圓角卡片與表格；以 <html data-admin-theme="b"> 啟用。
+   ============================================================ */
+html[data-admin-theme='b'] {
+  --ink: #111827;
+  --yac: #1c64f2;
+  --yac-hi: #76a9fa;
+  --yac-tint: #ebf5ff;
+  --line: #e5e7eb;
+  --bg: #f9fafb;
+  --soft: #f3f4f6;
+  --mute: #6b7280;
+  --red: #e02424;
+  --green: #057a55;
+  --amber: #c27803;
+  --sans: Inter, 'Noto Sans TC', 'Microsoft JhengHei', 'Segoe UI', system-ui, sans-serif;
+}
+html[data-admin-theme='b'] * { border-radius: 8px; }
+html[data-admin-theme='b'] .side-brand .mark { clip-path: none; background: var(--yac); }
+html[data-admin-theme='b'] .shell { display: block; }
+html[data-admin-theme='b'] .top { position: fixed; left: 0; right: 0; top: 0; height: 60px; z-index: 30; border-bottom: 1px solid var(--line); box-shadow: 0 1px 2px rgba(0, 0, 0, .05); }
+html[data-admin-theme='b'] .top-brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); font-size: 16px; }
+html[data-admin-theme='b'] .top-brand:hover { text-decoration: none; }
+html[data-admin-theme='b'] .top-brand .mark { width: 32px; height: 32px; background: var(--yac); color: #fff; display: inline-flex; align-items: center; justify-content: center; font: italic 800 12px var(--sans); }
+html[data-admin-theme='b'] .crumbs { margin-left: 24px; padding-left: 24px; border-left: 1px solid var(--line); font-family: var(--sans); letter-spacing: 0; font-size: 13px; }
+html[data-admin-theme='b'] .side { position: fixed; top: 60px; left: 0; bottom: 0; height: auto; width: 256px; background: #fff; border-right: 1px solid var(--line); z-index: 20; }
+html[data-admin-theme='b'] .side-brand { display: none; }
+html[data-admin-theme='b'] .side nav { padding: 16px 12px; }
+html[data-admin-theme='b'] .side h6 { font: 600 11px var(--sans); letter-spacing: .04em; padding: 16px 12px 6px; }
+html[data-admin-theme='b'] .side nav a { padding: 9px 12px; border-left: 0; font-size: 14px; margin-bottom: 2px; color: #374151; }
+html[data-admin-theme='b'] .side nav a:hover { background: var(--soft); }
+html[data-admin-theme='b'] .side nav a.on { background: var(--yac-tint); color: var(--yac); font-weight: 600; }
+html[data-admin-theme='b'] .main { margin-left: 256px; padding-top: 60px; }
+html[data-admin-theme='b'] .content { max-width: none; padding: 24px; }
+html[data-admin-theme='b'] .page-h h1 { font-size: 24px; font-weight: 700; }
+html[data-admin-theme='b'] .card { border-radius: 12px; box-shadow: 0 1px 3px rgba(0, 0, 0, .08); border-color: var(--line); }
+html[data-admin-theme='b'] .stats { border-radius: 12px; box-shadow: 0 1px 3px rgba(0, 0, 0, .08); gap: 0; }
+html[data-admin-theme='b'] .stat b { font: 700 28px var(--sans); }
+html[data-admin-theme='b'] .btn { background: var(--yac); border-color: var(--yac); letter-spacing: 0; padding: 8px 14px; font-weight: 500; }
+html[data-admin-theme='b'] .btn:hover { background: #1a56db; }
+html[data-admin-theme='b'] .btn.ghost { background: #fff; color: #374151; border-color: #d1d5db; }
+html[data-admin-theme='b'] .btn.ghost:hover { background: var(--soft); color: var(--yac); }
+html[data-admin-theme='b'] .btn.danger { background: #fff; color: var(--red); border-color: #f8b4b4; }
+html[data-admin-theme='b'] .btn.danger:hover { background: #fdf2f2; }
+html[data-admin-theme='b'] table.grid th { background: var(--soft); color: #374151; font: 600 12px var(--sans); letter-spacing: .03em; text-transform: uppercase; border-bottom: 1px solid var(--line); }
+html[data-admin-theme='b'] table.grid td { border-bottom: 1px solid var(--line); }
+html[data-admin-theme='b'] table.grid tr:hover td { background: #f9fafb; }
+html[data-admin-theme='b'] .pill { border-radius: 6px; font: 500 12px var(--sans); padding: 2px 10px; }
+html[data-admin-theme='b'] .pill.on { background: #def7ec; color: #03543f; }
+html[data-admin-theme='b'] .pill.off { background: var(--soft); color: #4b5563; }
+html[data-admin-theme='b'] .toolbar input, html[data-admin-theme='b'] .toolbar select,
+html[data-admin-theme='b'] .fld input[type=text], html[data-admin-theme='b'] .fld input[type=password], html[data-admin-theme='b'] .fld input[type=number],
+html[data-admin-theme='b'] .fld input[type=datetime-local], html[data-admin-theme='b'] .fld select, html[data-admin-theme='b'] .fld textarea,
+html[data-admin-theme='b'] .in, html[data-admin-theme='b'] table.sub input, html[data-admin-theme='b'] table.sub select { background: #f9fafb; border: 1px solid #d1d5db; }
+html[data-admin-theme='b'] .fld label { font: 500 13px var(--sans); letter-spacing: 0; color: #111827; }
+html[data-admin-theme='b'] .actions, html[data-admin-theme='b'] .sub-h { background: #f9fafb; }
+html[data-admin-theme='b'] .pager a, html[data-admin-theme='b'] .pager span.cur { border-radius: 6px; }
+html[data-admin-theme='b'] .flash { border-radius: 8px; }
+html[data-admin-theme='b'] .login { border-top-width: 1px; border-radius: 12px; }
+@media (max-width: 900px) {
+  html[data-admin-theme='b'] .main { margin-left: 0; }
+  html[data-admin-theme='b'] .side { transform: translateX(-100%); transition: transform .2s; }
+  html[data-admin-theme='b'] .side.open { transform: none; }
+  html[data-admin-theme='b'] .crumbs { display: none; }
+}

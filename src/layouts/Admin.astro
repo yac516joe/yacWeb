@@ -30,7 +30,13 @@ const nav: { group: string; items: { key: string; label: string; href: string }[
       { key: 'media', label: '圖片庫', href: '/admin/media' },
     ],
   },
-  { group: '系統', items: [{ key: 'audit', label: '操作紀錄', href: '/admin/audit' }] },
+  {
+    group: '系統',
+    items: [
+      { key: 'inquiries', label: '詢價單', href: '/admin/inquiries' },
+      { key: 'audit', label: '操作紀錄', href: '/admin/audit' },
+    ],
+  },
 ];
 ---
 <!doctype html>
@@ -41,6 +47,9 @@ const nav: { group: string; items: { key: string; label: string; href: string }[
     <meta name="robots" content="noindex, nofollow" />
     <title>{title} | YAC 後台</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script is:inline>
+      try { if (localStorage.getItem('yac-admin-theme') === 'b') document.documentElement.setAttribute('data-admin-theme', 'b'); } catch (e) {}
+    </script>
   </head>
   <body>
     <div class="shell">
@@ -69,15 +78,24 @@ const nav: { group: string; items: { key: string; label: string; href: string }[
         <header class="top">
           <div style="display:flex;gap:12px;align-items:center">
             <button class="menu-btn" type="button" id="menu">選單</button>
+            <a class="top-brand" href="/admin"><span class="mark">YAC</span><b>華佑科技 後台</b></a>
             <div class="crumbs">後台 / <b>{crumb || title}</b></div>
           </div>
-          <a class="view" href="/" target="_blank" rel="noopener">查看網站 ↗</a>
+          <div style="display:flex;gap:16px;align-items:center">
+            <button class="theme-btn" type="button" id="theme" title="切換後台版面">切換版面：A / B</button>
+            <a class="view" href="/" target="_blank" rel="noopener">查看網站 ↗</a>
+          </div>
         </header>
         <div class="content"><slot /></div>
       </div>
     </div>
     <script is:inline>
       document.getElementById('menu')?.addEventListener('click', function () { document.getElementById('side')?.classList.toggle('open'); });
+      document.getElementById('theme')?.addEventListener('click', function () {
+        var root = document.documentElement, b = root.getAttribute('data-admin-theme') === 'b';
+        if (b) root.removeAttribute('data-admin-theme'); else root.setAttribute('data-admin-theme', 'b');
+        try { localStorage.setItem('yac-admin-theme', b ? 'a' : 'b'); } catch (e) {}
+      });
       document.addEventListener('click', function (e) {
         var s = document.getElementById('side');
         if (s && s.classList.contains('open') && !s.contains(e.target) && e.target.id !== 'menu') s.classList.remove('open');

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createSessionToken, hashPassword, readCookie, verifyPassword, verifySessionToken } from '../src/lib/auth';
 import { legacyKey, isLegacyHtmlPath, legacyImageRedirect } from '../src/lib/redirects';
 import { sanitizeHtml } from '../src/lib/sanitize';
+import { parseInquiry } from '../src/lib/inquiry';
 import { normalizeRef } from '../src/lib/columns';
 import { searchTokens, type ProductDetail } from '../src/lib/queries';
 import { parseValues, RESOURCES, validateColumns } from '../src/lib/admin-resources';
@@ -180,5 +181,20 @@ describe('catalog table + CSV', () => {
     const ok = parseProductInput({ page_id: 1, yac_no: 'A', apps: [{ car_model: 'X' }, {}], refs: [{ ref_type: 'oem', ref_no: '1' }, { ref_type: 'oem', ref_no: '' }] });
     expect('value' in ok && ok.value.apps).toHaveLength(1);
     expect('value' in ok && ok.value.refs).toEqual([{ ref_type: 'OEM', ref_no: '1' }]);
+  });
+});
+
+describe('inquiry', () => {
+  const base = { name: ' 王小明 ', email: 'a@b.com', items: [{ yac: 'AA-02', series: 'Audi' }, { yac: '' }] };
+  it('驗證並整理欄位', () => {
+    const r = parseInquiry(base);
+    expect('value' in r && r.value.name).toBe('王小明');
+    expect('value' in r && r.value.items).toEqual([{ yac: 'AA-02', series: 'Audi' }]);
+  });
+  it('拒絕缺少姓名、錯誤 Email 或空清單', () => {
+    expect('error' in parseInquiry({ ...base, name: '' })).toBe(true);
+    expect('error' in parseInquiry({ ...base, email: 'nope' })).toBe(true);
+    expect('error' in parseInquiry({ ...base, items: [] })).toBe(true);
+    expect('error' in parseInquiry(null)).toBe(true);
   });
 });
