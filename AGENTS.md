@@ -123,7 +123,7 @@ npm run deploy
 - [ ] **Phase 5：Staging 驗證與正式切換**（步驟見 `docs/DEPLOY.md`；工作流程範本在 `docs/workflows/{ci,deploy}.yml`，因推送權杖無 `workflow` 權限，需有權限者複製到 `.github/workflows/`）
   - [x] 建立遠端 D1 `yac-website-db`（UUID 已寫入 `wrangler.toml`），已設定 Preview 環境的 `ADMIN_PASSWORD_HASH` / `SESSION_SECRET` secrets。
   - [x] R2 已啟用、bucket `yac-website-media` 已建立並綁定（`wrangler.toml`）；未綁定 R2 時圖片改存 D1 `media_blobs`（migration `0002`，單檔 1 MB）。
-  - [ ] 驗證圖片上傳 → 讀取 → 刪除完整流程（Preview 受 D1 免費版「每日寫入列數」上限阻擋，匯入 seed 已用完當日額度；UTC 午夜重置後再測）。
+  - [x] 驗證圖片上傳 → 讀取 → 刪除完整流程（Preview，R2；D1 額度重置後已通過）。遠端 D1 已套用 `0003_images_to_public_images.sql`（products 6978 筆為 `/images/...`，舊路徑 0 筆）。
   - [ ] 設定 Production secrets（`ADMIN_PASSWORD_HASH`、`SESSION_SECRET`）。
   - [x] 套用遠端 migration 並匯入 seed（products 8679、applications 7759、cross_refs 10840、redirects 547、catalog_pages 395、news 3）。8 個缺圖（見遷移報告）仍待補齊或移除。
   - [x] 已手動部署 Preview：`https://preview.yac-website.pages.dev`（`--branch=preview`；首頁 / 型錄 / 搜尋 / 舊網址 301 / 舊圖片 / 後台登入皆通過）。
